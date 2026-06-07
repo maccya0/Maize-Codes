@@ -1,0 +1,155 @@
+using MazeGame;
+using System;
+using System.Collections;
+using UnityEngine;
+
+public abstract class SkillAction : MonoBehaviour
+{
+    [SerializeField] protected PlayerController playerController;
+    [SerializeField] protected SkillData skillData;
+    protected InputSystem_Actions actions ;
+    protected byte actionNum = 0;
+    protected float recastTime = 0;
+    protected bool isReady;
+    protected GameObject particleObject;
+    private Coroutine runninngCoroutine;
+    public event Action<float> OnRecastProgress;
+    public event Action<int> OnActionSkill;
+
+    protected virtual void Awake()
+    {
+        if (skillData.particle == null)
+        {
+            throw new InvalidOperationException("パーティクルが未設定");
+        }
+        if (skillData == null)
+        {
+            throw new InvalidOperationException("データが未設定");
+        }
+        if (skillData.actionTime == 0 || skillData.actionLimit == 0)
+        {
+            throw new InvalidOperationException("1以上の値が未設定");
+        }
+        playerController.Initilaze += Initilalize;
+    }
+
+    private void Initilalize()
+    {
+        actions = playerController.Actions;
+        actionNum = skillData.actionLimit;
+        isReady = true;
+        recastTime = 0;
+        runninngCoroutine = null;
+        playerController.Initilaze -= Initilalize;
+    }
+
+    private void Start()
+    {
+        // 初期回数を更新
+        OnActionSkill?.Invoke(actionNum);
+    }
+
+
+    public void StartAction()
+    {
+        if (!isReady || actionNum == 0 || !CanExecuteCustom()) return;
+        if(runninngCoroutine != null)
+        {
+            StopCoroutine(runninngCoroutine);
+        }
+        runninngCoroutine = StartCoroutine(ActionFlow());
+    }
+
+    // 個別スキルごとの追加条件（スタミナ等）があればオーバーライド
+    protected virtual bool CanExecuteCustom() => true;
+    protected abstract IEnumerator ExecuteRoutine();
+
+    protected void SkillExecute()
+    {
+        // スキル回数を減算
+        actionNum--;
+        OnActionSkill?.Invoke(actionNum);
+        OnRecastProgress?.Invoke(0);
+    }
+
+    private IEnumerator ActionFlow()
+    {
+        isReady = false;
+        yield return ExecuteRoutine();
+
+
+        // 後に何回か使うのでキャッシュ
+        float maxTime = skillData.recastTime;
+        recastTime = maxTime;
+        while (recastTime > 0)
+        {
+            recastTime -= Time.deltaTime;
+            float rate = (maxTime - recastTime) / maxTime ;
+            OnRecastProgress?.Invoke(rate);
+            yield return null;
+        }
+
+        // 完了したのを通知
+        OnRecastProgress?.Invoke(1);
+        isReady = true;
+    }
+
+    public void StopAction()
+    {
+        if(runninngCoroutine != null && recastTime ==0)
+        {
+            StopCoroutine (runninngCoroutine);
+            runninngCoroutine = null;
+            if (particleObject != null)
+            {
+                Destroy(particleObject);
+                particleObject = null;
+            }
+            isReady = true;
+            OnActionCanceled();
+        }
+    }
+    protected virtual void OnActionCanceled() { }
+
+    protected void StartSe(SoundData sound,Vector3 position )
+    {
+        SoundManager soundManager = SoundManager.Instance;
+        if(soundManager != null)
+        {
+            soundManager.RequestSe(sound, position);
+        }
+    }
+
+    protected GameObject InstantiateAndDestroy(GameObject prefab, Vector3 position, Quaternion rotation, SoundData soundData)
+    {
+        GameObject go = Instantiate(prefab, position, rotation);
+
+        StartSe(soundData, position);
+
+        // ParticleSystemコンポーネントを取得
+        var ps = go.GetComponent<ParticleSystem>();
+        go.SetActive(true);
+        if (ps != null)
+        {
+            // パーティクルのメインモジュールから「持続時間 + 寿命」を取得して、その後にDestroy
+            float totalDuration = ps.main.duration + ps.main.startLifetime.constantMax;
+            Destroy(go, totalDuration);
+        }
+        else
+        {
+            // パーティクルでなければデフォルトの3秒とかで消す
+            Destroy(go, 3.0f);
+        }
+        return go;
+    }
+
+    public void UseCharge(int addNum)
+    {
+        actionNum += (byte)addNum;
+        if ( actionNum > skillData.actionLimit)
+        {
+            actionNum = skillData.actionLimit;
+        }
+        OnActionSkill?.Invoke(actionNum);
+    }
+}
