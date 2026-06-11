@@ -2,37 +2,55 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-public class EnemyManager : MonoBehaviour
+public class EnemyManager : BaseManager<EnemyManager>
 {
-    private static EnemyManager instance;
-    public static EnemyManager Instance
-    {
-        get
-        {
-            if (instance == null)
-            {
-                // シーン上から自動検索（念のためのセーフティ）
-                instance = FindFirstObjectByType<EnemyManager>();
-            }
-            return instance;
-        }
-    }
     [Header("--- References ---")]
-    [SerializeField] private List<GameObject> Enemies = new List<GameObject>();
-    [SerializeField] private List<GameObject> Statues = new List<GameObject>();
-    [SerializeField] private List<GameObject> PatrolPoints = new List<GameObject>();
+    [SerializeField] private List<GameObject> Enemies;
+    [SerializeField] private List<GameObject> Statues;
+    [SerializeField] private List<GameObject> PatrolPoints;
     [SerializeField] private GameObject Player;
 
     private List<Vector3> SpownPoints;
     private List<GameObject> EnemyList;
     private List<GameObject> StatueList;
 
-    private void Awake()
+    protected override void Awake()
     {
-        instance = this;
+        base.Awake();
+        if(Instance !=  this) return;
+    }
+
+    public override void ManagerInit()
+    {
         EnemyList = new List<GameObject>();
         StatueList = new List<GameObject>();
         SpownPoints = new List<Vector3>();
+    }
+
+    public void ManagerStart(int MaxEnemyNum, int MaxStatueNum, List<Vector3> SpownPoint)
+    {
+        ManagerStart();
+        EnemyList.Capacity = MaxEnemyNum;
+        StatueList.Capacity = MaxStatueNum;
+        SpownPoints = SpownPoint ?? new List<Vector3>();
+    }
+    public override void  ManagerStart()
+    {
+        base.ManagerStart();
+        // 一度生成した敵は削除する
+        foreach(var enemy in EnemyList)
+        {
+            if(enemy == null)continue;
+            Destroy(enemy);
+        }
+        EnemyList.Clear();
+        foreach (var statue in StatueList)
+        {
+            if (statue == null) continue;
+            Destroy(statue);
+        }
+        StatueList.Clear();
+        SpownPoints.Clear();
     }
 
     public void RegisterSpownPoints(Vector3 pos)
@@ -100,18 +118,6 @@ public class EnemyManager : MonoBehaviour
         return enemy;
     }
 
-    public GameObject GenerateStatue()
-    {
-        if (Statues == null || Statues.Count == 0) return null;
-        if (SpownPoints == null || SpownPoints.Count == 0) return null;
-        int indexStatue = UnityEngine.Random.Range(0, Statues.Count);
-        int indexPos = UnityEngine.Random.Range(0, SpownPoints.Count);
-        GameObject statue = Instantiate(Statues[indexStatue], SpownPoints[indexPos], Quaternion.identity);
-        StatueList.Add(statue);
-        SpownPoints.RemoveAt(indexPos);
-        return statue;
-    }
-
     public GameObject GenerateEnemy(GameObject enemyPrefab)
     {
         // プレハブがCollectMazeInfoを持っていないならEnemyではない
@@ -125,16 +131,30 @@ public class EnemyManager : MonoBehaviour
         return enemy;
     }
 
+    public GameObject GenerateStatue()
+    {
+        if (Statues == null || Statues.Count == 0) return null;
+        if (SpownPoints == null || SpownPoints.Count == 0) return null;
+        int indexStatue = UnityEngine.Random.Range(0, Statues.Count);
+        int indexPos = UnityEngine.Random.Range(0, SpownPoints.Count);
+        GameObject statue = Instantiate(Statues[indexStatue], SpownPoints[indexPos], Quaternion.identity);
+        StatueList.Add(statue);
+        SpownPoints.RemoveAt(indexPos);
+        return statue;
+    }
+
+
     private async void InitializeEnemyDataDelayed(GameObject enemy)
     {
         // 非同期処理でAgent生成まで待機させる
+        if (enemy == null) return;
         CollectMazeInfo info = enemy.GetComponent<CollectMazeInfo>();
-        do
+        if (info == null) return;
+        
+        while (enemy != null && info != null && !info.IsGeneratedAgent())
         {
-            // Agent生成まで待機
             await Task.Yield();
-
-        } while (!info.IsGeneratedAgent());
+        }
         for (int i = 0; i < PatrolPoints.Count; i++)
         {
             info.RegisterPatrolPoint(PatrolPoints[i]);
@@ -151,8 +171,6 @@ public class EnemyManager : MonoBehaviour
 
         for (int i = 0; i < EnemyList.Count; i++)
         {
-            if (EnemyList[i] == null) continue;
-
             CollectMazeInfo info = EnemyList[i].GetComponent<CollectMazeInfo>();
             if (info != null)
             {
@@ -167,10 +185,10 @@ public class EnemyManager : MonoBehaviour
         if (Player == null) return;
         if (EnemyList == null) return;
 
+
         for (int i = 0; i < EnemyList.Count; i++)
-        {
-            if (EnemyList[i] == null) continue;
-            if(Vector3.Distance(EnemyList[i].transform.position,infoPos) >= range) continue;
+        { 
+            if (Vector3.Distance(EnemyList[i].transform.position,infoPos) >= range) continue;
             CollectMazeInfo info = EnemyList[i].GetComponent<CollectMazeInfo>();
             if (info != null)
             {

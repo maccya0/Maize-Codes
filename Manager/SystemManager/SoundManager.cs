@@ -7,9 +7,8 @@ using UnityEngine.Audio;
 
 namespace MazeGame
 {
-    public class SoundManager : MonoBehaviour
+    public class SoundManager : BaseManager<SoundManager>
     {
-        public static SoundManager Instance { get; private set; }
         [SerializeField] private int maxSeNum = 10;
         [SerializeField] private List<AudioSource> seSource;
         [SerializeField] private AudioSource bgmSource;
@@ -26,18 +25,27 @@ namespace MazeGame
         public bool CanPlaySound { get; set; }
 
 
-        private void Awake()
+        protected override void Awake()
         {
-            if (Instance != null)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Instance = this;
-            DontDestroyOnLoad(this);
+            base.Awake();
+            if(Instance != this ) return;
+            seSource = new List<AudioSource>();
+        }
+
+        public override void ManagerInit()
+        {
+            base.ManagerInit();
+            // “Á‚É‚È‚µ
+        }
+
+        public override void ManagerStart()
+        {
+            base.ManagerStart();
             seNum = 0;
             CanPlaySound = false;
-            seSource = new List<AudioSource>();
+            StopAllSe();
+            ClearAllSound();
+            Initialize();
         }
 
         public void StopBgm()

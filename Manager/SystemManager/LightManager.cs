@@ -1,21 +1,21 @@
 using MazeGame;
 using UnityEngine;
-public class LightManager : MonoBehaviour
+public class LightManager : BaseManager<LightManager>
 {
-    public static LightManager Instance { get; private set; }
     private float LightVal;
 
-    private void Awake()
+    protected override void Awake()
     {
-        if (Instance != null)
-        {
-            Destroy(gameObject);
-            return;
-        }
-        Instance = this;
-        DontDestroyOnLoad(this);
-        LightVal = MazeGameConstants.GameConstant.lightMinVal;
+        base.Awake();
+        if(Instance != this) return;
     }
+
+    public override void ManagerStart()
+    {
+        base.ManagerStart();
+        Initialize();
+    }
+
 
     public void AdjustLightVal(float normalized)
     {

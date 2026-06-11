@@ -6,7 +6,7 @@ namespace MazeGame
 {
     public class ResetButtonController : UICursorContoroller
     {
-        [SerializeField] GameDirector gameDirector;
+        [SerializeField] MazeGameDirector gameDirector;
         [SerializeField] SoundData decideData;
         public void ActionButton()
         {

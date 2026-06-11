@@ -3,29 +3,36 @@ using UnityEngine.InputSystem;
 
 namespace MazeGame
 {
-    public class InputManager : MonoBehaviour
+    public class InputManager : BaseManager<InputManager>
     {
         [SerializeField] GameObject ConfigWindow;
         private InputSystem_Actions inputActions;
 
 
-        public void GenerateInputSysytem()
+        protected override void Awake()
         {
-            if(inputActions != null) return;
+            base.Awake();
+            if(Instance != this) return;
+            if (inputActions != null) return;
             inputActions = new InputSystem_Actions();
             inputActions.Player.ToUI.performed += OnChangeUI;
             inputActions.UI.ToPlayer.performed += OnChangePlayer;
-
-            inputActions.Player.Enable();
         }
 
-        private void OnDestroy()
+        public override void ManagerStart()
         {
+            base.ManagerStart();
+            ChangeInputModeUIToPlayer();
+        }
+
+        public override void ManagerDestroy()
+        {
+            if (inputActions == null) return;
+            base.ManagerDestroy();
             inputActions.Player.ToUI.performed -= OnChangeUI;
             inputActions.UI.ToPlayer.performed -= OnChangePlayer;
             inputActions.Dispose();
             inputActions = null;
-
         }
 
         public void OnChangeUI(InputAction.CallbackContext context)

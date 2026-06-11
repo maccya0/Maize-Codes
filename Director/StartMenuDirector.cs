@@ -3,7 +3,7 @@ using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using MazeGame;
 
-public class MenuManager : MonoBehaviour
+public class StartMenuDirector : MonoBehaviour
 {
     [SerializeField] List<SliderController> sliderList;
     [SerializeField] SoundData menuBGM;
