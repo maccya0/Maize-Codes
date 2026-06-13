@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using System.Collections;
+using Cysharp.Threading.Tasks.Triggers;
 
 namespace MazeGame
 {
@@ -11,7 +12,6 @@ namespace MazeGame
 
         [SerializeField] private StatusData statusData;
         [SerializeField] private List<SkillAction> skills;
-        [SerializeField] private InputManager inputManager;
         [SerializeField] private Rigidbody playerRb;
         [SerializeField] private float invincibleTime = 0.5f;
 
@@ -22,65 +22,133 @@ namespace MazeGame
         private SpeedStatus speedStatus;
         private SpeedModifire speedModifire;
         private bool isPlayingInvincible;
+        private GameObject StartObj;
+        private DashAction dashAction;
 
         public bool IsPlayerControll { get; set; }
 
         private sbyte DeadLine = -10;
-        public InputSystem_Actions Actions { get; private set; }
         private Vector2 moveInput;
         public bool IsMove { get; private set; }
 
+        private InputSystem_Actions Actions;
 
         public event Action DiedEvent;
         public event Action<short> HPEvent;
         public event Action<float> StaminaEvent;
         public event Action<float> SpeedEvent;
-        public event Action Initilaze;
 
-        private void Awake()
+
+        public void Init(InputSystem_Actions inputActions,GameObject start)
         {
+            // Animation関連
             animator = GetComponent<Animator>();
             if (animator == null)
             {
                 throw new InvalidOperationException("Animatorが未設定");
             }
+
+            // InputSystem関連
+            Actions = inputActions;
+            Actions.Player.Move.performed += OnMovePerformed;
+            Actions.Player.Move.canceled += OnMoveCanceled;
+
+            // ステータス関連
             hpStatus = new HPStatus(statusData.MAXHP);
             statminaStatus = new StatminaStatus(statusData.MAXSTAMINA);
             speedModifire = new SpeedModifire();
             speedStatus = new SpeedStatus(statusData.INITIALSPEED,statusData.MINSPEED, statusData.MAXSPEED,speedModifire);
-            IsMove = false;
-            isPlayingInvincible = false;
-            IsPlayerControll = false;
-            inputManager.GenerateInputSysytem();
-            Actions = inputManager.GetInputAction();
-            Actions.Player.Move.performed += OnMovePerformed;
-            Actions.Player.Move.canceled += OnMoveCanceled;
-            Actions.Enable();
-        }
 
-        private void Start()
-        {
-            Initilaze?.Invoke();
+            // スキル関連
             foreach (var skill in skills)
             {
-                skill.enabled = true;
+                skill.Init(this, Actions);
             }
-            gameObject.GetComponent<DashAction>().enabled = true;
-            gameObject.GetComponent<ItemAction>().enabled = true;
-            StartCoroutine(Respone());
+            dashAction = gameObject.GetComponent<DashAction>();
+            dashAction.Init(this, Actions);
+            gameObject.GetComponent<ItemAction>().Init(this, Actions);
+
+            // その他
+            StartObj = start;
+        }
+
+        public void Begin()
+        {
+            // ガード設定
+            IsPlayerControll = false;
+
+            // Animation関連
+            // 現状は特になし
+
+            // ステータス関連
+            hpStatus.Resopone();
+            speedStatus.Resopone();
+            speedModifire.ClearModifire();
+            statminaStatus.Resopone();
+
+            // スキル関連
+            foreach (var skill in skills)
+            {
+                skill.Begin();
+            }
+            dashAction.Begin();
+            gameObject.GetComponent<ItemAction>().Begin();
+
+
+            // その他データ
+            IsMove = false;
+            isPlayingInvincible = false;
             IsPlayerControll = true;
         }
-        private void OnDestroy()
+
+        public void Destroy()
         {
-            if (Actions != null)
-            {
-                Actions.Player.Move.performed -= OnMovePerformed;
-                Actions.Player.Move.canceled -= OnMoveCanceled;
-                Actions.Disable();
-                Actions.Dispose();
-            }
+
+            // Animation関連
+            // 特になし
+
+            // InputSystem関連
+            Actions.Player.Move.performed -= OnMovePerformed;
+            Actions.Player.Move.canceled -= OnMoveCanceled;
+
+            // ステータス関連
             speedModifire.Dispose();
+
+            // スキル関連
+            foreach (var skill in skills)
+            {
+                skill.Cleanup();
+            }
+            dashAction.Destroy();
+            gameObject.GetComponent<ItemAction>().Destroy();
         }
+
+        public void Tick()
+        {
+            // Animation関連
+            // 特になし
+            // ステータス関連
+            // 各種外部からの操作が行われるので不要
+            // スキル関連
+            dashAction.Tick();
+            // InputSystemのデリゲートに依存するので操作不要
+
+            // Player更新
+            if (hpStatus.GetAlive())
+            {
+                if (IsPlayerControll)
+                {
+                    PlayerMoveUpdate();
+                }
+            }
+            else
+            {
+                DiedEvent?.Invoke();
+                Respone();
+            }
+
+        }
+
 
 
         private void OnMovePerformed(InputAction.CallbackContext context)
@@ -94,23 +162,6 @@ namespace MazeGame
             IsMove = false;
         }
 
-        private void FixedUpdate()
-        {
-
-            if (hpStatus.GetAlive())
-            {
-                if(IsPlayerControll)
-                {
-                    PlayerMoveUpdate();
-                }
-            }
-            else
-            {
-                DiedEvent.Invoke();
-                StartCoroutine(Respone());                
-            }
-
-        }
 
         public IEnumerator InvincibleTimer(float duration)
         {
@@ -119,15 +170,9 @@ namespace MazeGame
             isPlayingInvincible =false;
         }
 
-        private IEnumerator Respone()
+        private void Respone()
         {
-            Maze maze = Maze.Instance;
-
-            while (maze.startTransform == null)
-            {
-                yield return null;
-            }
-            this.transform.position = maze.startTransform.position;
+            this.transform.position = StartObj.transform.position;
             hpStatus.Resopone();
             speedStatus.Resopone();
             speedModifire.ClearModifire();

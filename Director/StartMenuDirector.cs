@@ -2,25 +2,53 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using MazeGame;
+using System;
+using System.Threading.Tasks;
 
-public class StartMenuDirector : MonoBehaviour
+public class StartMenuDirector : BaseDirector<StartMenuDirector>
 {
-    [SerializeField] List<SliderController> sliderList;
-    [SerializeField] SoundData menuBGM;
+    private SystemDirector SystemDirector;
 
-    private void Awake()
+    public async void Init()
     {
-        if (!SceneManager.GetSceneByName("BackGroundScene").isLoaded)
+
+        SystemDirector = UnityEngine.Object.FindAnyObjectByType<SystemDirector>();
+        if (SystemDirector == null)
         {
-            SceneManager.LoadSceneAsync("BackGroundScene", LoadSceneMode.Additive);
+            throw new Exception("Not Find A SystemDirector");
         }
+        DirectorInit();
+        await DirectorStart();
+
     }
-    private void Start()
+
+    public void Tick()
     {
-        foreach (var slider in sliderList)
-        {
-            slider.SetupSlider();
-        }
-        SoundManager.Instance.StartBgm(menuBGM);
+        DirectorRunTime();
     }
+
+    public void Destroy()
+    {
+        DirectorDestroy();
+    }
+
+    protected override void DirectorInit()
+    {
+    }
+    protected override Task DirectorStart()
+    {
+        return Task.CompletedTask;
+    }
+
+    protected override void DirectorRunTime()
+    {
+    }
+
+    protected override Task DirectorDestroy()
+    {
+        return Task.CompletedTask;
+    }
+
+}
+
 }

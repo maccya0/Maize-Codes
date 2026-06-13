@@ -21,11 +21,9 @@ namespace MazeGame
             BeforeAndAfter,
         }
 
-        protected override void Awake()
+        public override void Init(PlayerController _playerController, InputSystem_Actions _actions)
         {
-            base.Awake();
-            target = null;
-            backParticleObject = null;
+            base.Init(_playerController, _actions);
             if (rayDistance == 0)
             {
                 throw new InvalidOperationException("1以上の値が未設定");
@@ -34,26 +32,24 @@ namespace MazeGame
             {
                 throw new InvalidOperationException("ターゲットが未設定");
             }
-        }
-
-        private void OnEnable()
-        {
             actions.Player.SlipThrough.performed += OnSlipThroughPerformed;
         }
 
-        private void OnDisable()
+        public override void Begin()
+        {
+            base.Begin();
+            target = null;
+            backParticleObject = null;
+        }
+
+        public override void Cleanup()
         {
             StopAllCoroutines();
-            actions.Player.SlipThrough.performed -= OnSlipThroughPerformed;
-            if (particleObject != null)
+            if (actions != null)
             {
-                Destroy(particleObject);
+                actions.Player.SlipThrough.performed -= OnSlipThroughPerformed;
             }
-            if (backParticleObject != null)
-            {
-                Destroy(backParticleObject);
-            }
-            target = null;
+            actions = null;
         }
 
         private void OnSlipThroughPerformed(InputAction.CallbackContext context)

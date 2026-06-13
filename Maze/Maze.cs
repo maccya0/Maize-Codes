@@ -14,9 +14,6 @@ namespace MazeGame
         private MazeExtends maze;
         private MazeObjKinds[,] mazeData;
         private int rate;
-        public Transform startTransform { get; set; }
-        public Transform goalTransform { get; set; }
-        public List<Transform> checkTransform { get; set; }
         public GameObject[,] stageObjects { get; set; }
 
 
@@ -26,11 +23,7 @@ namespace MazeGame
             maze.SetMazeData(_size, _trapNum, _enemyNum,_rate, _checkPointNum, _itemNum);
             mazeData = maze.GetMazeData();
             rate = _rate;
-            startTransform = null;
-            goalTransform = null;
             stageObjects = new GameObject[GetStageSize(), GetStageSize()];
-            checkTransform = new List<Transform>();
-
         }
 
         public int GetRate()

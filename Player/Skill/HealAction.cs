@@ -9,26 +9,28 @@ namespace MazeGame
     {
         [SerializeField] private short HealValue = 300;
 
-        protected  override void Awake()
-        {
-            base.Awake();
-        }
 
-        private void OnEnable()
+        public override void Init(PlayerController _playerController, InputSystem_Actions _actions)
         {
+            base.Init(_playerController, _actions);
             actions.Player.Heal.performed += OnHealPerformed;
         }
 
-        private void OnDisable()
+        public override void Begin()
+        {
+            base.Begin();
+            particleObject = null;
+        }
+
+        public override void Cleanup()
         {
             StopAllCoroutines();
             if (actions != null)
             {
                 actions.Player.Heal.performed -= OnHealPerformed;
             }
+            actions = null;
         }
-
-
 
         public void OnHealPerformed(InputAction.CallbackContext context)
         {

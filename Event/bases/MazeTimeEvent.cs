@@ -32,6 +32,11 @@ namespace MazeGame
         protected abstract void EventStart();
         protected abstract void EventEnd();
 
+        public virtual void StopEvent()
+        {
+            StopAllCoroutines();
+        }
+
         protected virtual IEnumerator EventAction()
         {
             yield return new WaitForSeconds(EventTime);

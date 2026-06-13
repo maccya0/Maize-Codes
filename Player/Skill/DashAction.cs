@@ -1,5 +1,4 @@
-using System;
-using System.Collections;
+Ôªøusing System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,123 +6,108 @@ namespace MazeGame
 {
     public class DashAction : MonoBehaviour
     {
-        [SerializeField] private PlayerController playerController;
         [SerializeField] private float speedVal = 0.25f;
         private InputSystem_Actions actions;
-        private Coroutine coroutine;
-        private Coroutine healCoroutine;
-        private bool enableFlg;
+        private PlayerController playerController;
+
+        private bool isDashRequested;
+        private bool isDashing;
         private bool isShortness;
+
         public event Action<float> OnCurrentStamina;
 
-
-        private void Awake()
+        public void Init(PlayerController _playerController, InputSystem_Actions _actions)
         {
-            playerController.Initilaze += Initialize;
-        }
+            playerController = _playerController;
+            actions = _actions;
 
-        private void OnEnable()
-        {
             actions.Player.Dash.started += OnDashStarted;
-            actions.Player.Dash.performed += OnDashPerformed;
             actions.Player.Dash.canceled += OnDashCanceled;
         }
 
-        private void Initialize()
+        public void Begin()
         {
-            actions = playerController.Actions;
-            enableFlg = true;
+            isDashRequested = false;
+            isDashing = false;
             isShortness = false;
-            coroutine = null;
-            healCoroutine = null;
-            playerController.Initilaze -= Initialize;
         }
 
-        private void OnDisable()
+        public void Destroy()
         {
-            actions.Player.Dash.started -= OnDashStarted;
-            actions.Player.Dash.performed -= OnDashPerformed;
-            actions.Player.Dash.canceled -= OnDashCanceled;
-            actions = null;
+            if (actions != null)
+            {
+                actions.Player.Dash.started -= OnDashStarted;
+                actions.Player.Dash.canceled -= OnDashCanceled;
+            }
         }
 
         private void OnDashStarted(InputAction.CallbackContext context)
         {
-            // ÉXÉ^É~ÉiêÿÇÍ,ÉfÉoÉtíÜ,à⁄ìÆñ≥ÇµÇÃèÍçáÇÕïsãñâ¬
-            if (playerController.IsDebaff() || isShortness || !playerController.IsMove)
-            {
-                enableFlg = false;
-            }
-            else
-            {
-                enableFlg = true;
-                playerController.AddSpeed(this.GetInstanceID().ToString(),speedVal);
-                // ÉXÉ^É~ÉiâÒïúíÜÇ»ÇÁé~ÇﬂÇÈ
-                if(healCoroutine != null)
-                {
-                    StopCoroutine(healCoroutine);
-                }
-            }
-        }
-
-
-        public void OnDashPerformed(InputAction.CallbackContext context)
-        {
-            if (!enableFlg) return;
-            if (!playerController.IsMove) return;
-            // îOÇÃÇΩÇﬂÅAå√Ç¢ÉRÉãÅ[É`ÉìÇ™écÇ¡ÇƒÇ¢ÇΩÇÁé~ÇﬂÇƒÇ©ÇÁêVÇµÇ≠ãNìÆÇ∑ÇÈ 
-            if (coroutine != null) StopCoroutine(coroutine);
-            //É_ÉbÉVÉÖãñâ¬éûÇÃÇ›ëñÇÈ
-            coroutine = StartCoroutine(DashRoutine());
-        }
-
-        private IEnumerator DashRoutine()
-        {
-            //É_ÉbÉVÉÖíÜÇÕèôÅXÇ…å∏Ç¡ÇƒÇ¢Ç≠
-            while (playerController.GetStamina() > 0)
-            {
-                playerController.DownStamina(Time.deltaTime);
-                OnCurrentStamina?.Invoke(playerController.GetStamina());
-                yield return null;
-            }
-
-            // ÉXÉ^É~ÉiÇ™âÒïúédêÿÇÈÇ‹Ç≈ãtÇ…íxÇ≠Ç»ÇÈ(ëßêÿÇÍ)
-            isShortness = true;
-            playerController.CompleateSpeedData(this.GetInstanceID().ToString());
-            playerController.DownSpeed(this.GetInstanceID().ToString(),speedVal);
-            float maxStamina = playerController.GetMaxStamina();
-            while (playerController.GetStamina() < playerController.GetMaxStamina())
-            {
-                playerController.HealStamina(Time.deltaTime);
-                OnCurrentStamina?.Invoke(playerController.GetStamina());
-                yield return null;
-            }
-            playerController.CompleateSpeedData(this.GetInstanceID().ToString());
-            enableFlg = false;
-            isShortness = false;
+            isDashRequested = true;
         }
 
         private void OnDashCanceled(InputAction.CallbackContext context)
         {
-            // ÉfÉoÉtíÜÇ‡ÇµÇ≠ÇÕëßêÿÇÍÇÃéû
-            if (!enableFlg || isShortness) return;
-            // ÉXÉ^É~ÉiÇégÇ¢êÿÇÁÇ»Ç¢èÍçáÇÃÇ›é~ÇﬂÇÈ
-            StopCoroutine(coroutine);
-            coroutine = null;
-            playerController.CompleateSpeedData(this.GetInstanceID().ToString());
-            enableFlg = false;
-            // ÉXÉ^É~ÉiâÒïú
-            healCoroutine = StartCoroutine(HealRoutine());
+            isDashRequested = false;
         }
 
-        private IEnumerator HealRoutine()
+        public void Tick()
         {
-            while (playerController.GetStamina() < playerController.GetMaxStamina())
+            string speedId = this.GetInstanceID().ToString();
+
+            if (isShortness)
+            {
+                if (playerController.GetStamina() < playerController.GetMaxStamina())
+                {
+                    playerController.HealStamina(Time.deltaTime);
+                    OnCurrentStamina?.Invoke(playerController.GetStamina());
+                }
+                else
+                {
+                    playerController.CompleateSpeedData(speedId);
+                    isShortness = false;
+                }
+                return;
+            }
+
+            if (isDashing)
+            {
+                if (!isDashRequested || !playerController.IsMove)
+                {
+                    StopDash(speedId);
+                    return;
+                }
+
+                if (playerController.GetStamina() > 0)
+                {
+                    playerController.DownStamina(Time.deltaTime);
+                    OnCurrentStamina?.Invoke(playerController.GetStamina());
+                }
+                else
+                {
+                    StopDash(speedId);
+                    isShortness = true;
+                    playerController.DownSpeed(speedId, speedVal);
+                }
+                return;
+            }
+
+            if (isDashRequested && playerController.IsMove && !playerController.IsDebaff())
+            {
+                isDashing = true;
+                playerController.AddSpeed(speedId, speedVal);
+            }
+            else if (playerController.GetStamina() < playerController.GetMaxStamina())
             {
                 playerController.HealStamina(Time.deltaTime);
                 OnCurrentStamina?.Invoke(playerController.GetStamina());
-                yield return null;
             }
+        }
+
+        private void StopDash(string speedId)
+        {
+            isDashing = false;
+            playerController.CompleateSpeedData(speedId);
         }
     }
 }

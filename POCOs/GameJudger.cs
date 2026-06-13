@@ -10,13 +10,14 @@ namespace MazeGame
         // 全体制御
         private bool isJudged;
         private int deathCount;
+        private bool isChecked;
 
         // ゴール/プレイヤー関連
         private readonly int maxDeathCount;
         private readonly GoalController goalController;
         private readonly PlayerController playerController;
 
-        public event Action<GameState> OnGameFinished;
+        public event Action<bool> OnGameFinished;
 
         public GameJudger(GoalController goal, PlayerController player, int maxDeath)
         {
@@ -30,10 +31,11 @@ namespace MazeGame
             if (TimeManager.Instance != null) TimeManager.Instance.TimeUpEvent += CheckTimeEvent;
         }
 
-        public void Reset()
+        public void Start()
         {
             isJudged = false;
             deathCount = 0;
+            isChecked = false;
         }
         public void Dispose()
         {
@@ -45,11 +47,11 @@ namespace MazeGame
         private void CheckGoalEvent()
         {
             if (isJudged) return;
-            if(GameDirector.Instance.IsAllCheckedPoints)
+            if(isChecked)
             {
                 isJudged = true;
                 MessageScrollManager.Instance.EnqueueMessage("踏破した");
-                OnGameFinished?.Invoke(GameState.Win);
+                OnGameFinished?.Invoke(true);
             }
             else
             {
@@ -64,14 +66,18 @@ namespace MazeGame
             if (deathCount >= maxDeathCount)
             {
                 isJudged = true;
-                OnGameFinished?.Invoke(GameState.Lose);
+                OnGameFinished?.Invoke(false);
             }
         }
         private void CheckTimeEvent()
         {
             if (isJudged) return;
             isJudged = true;
-            OnGameFinished?.Invoke(GameState.Lose);
+            OnGameFinished?.Invoke(false);
+        }
+        public void CheckdAllPoints()
+        {
+            isChecked = true;
         }
     }
 }

@@ -11,11 +11,12 @@ namespace MazeGame
 
         [SerializeField] private StageObjData stageObjData;
         [SerializeField] public NavMeshSurface navMesh;
-        [SerializeField] public GameObject goalObject; 
-        [SerializeField] public GameObject startObject;
-        [SerializeField] private GameObject[] checkPoints;
         [SerializeField] private GameObject itemBox;
         [SerializeField][Range(0, 255)] private uint enemyRange = 192;
+
+        private GameObject goalObject;
+        private GameObject startObject;
+        private GameObject[] checkPoints;
 
         /* ˆ—‹¤’Êƒf[ƒ^ */
         private int Size;
@@ -24,27 +25,32 @@ namespace MazeGame
         private GameObject rootObject;
         private Vector3 rootPos = new Vector3(MazeConstants.rootX, MazeConstants.rootY, MazeConstants.rootZ);
 
-        public void Initialize()
+        public void Init(GameObject _goalObject , GameObject _startObject , GameObject[] _checkPointObjects)
         {
-            ResetStage();
             if (navMesh == null)
             {
                 throw new InvalidOperationException("ƒ^[ƒQƒbƒg‚ª–¢İ’è");
             }
-
-            //–À˜H¶¬ƒf[ƒ^æ“¾
+            goalObject = _goalObject;
+            startObject = _startObject;
+            checkPoints = _checkPointObjects;
             maze = Maze.Instance;
-            Size = maze.GetStageSize();
-            mazeData = maze.GetMazeData();
-            //–À˜H¶¬
-            CreateMazeStage();
 
-            // ¶¬Œãî•ñŠi”[
-            maze.startTransform = startObject.transform;
-            maze.goalTransform = goalObject.transform;
         }
 
-        public void ResetStage()
+        public void Begin()
+        {
+            ResetStage();
+
+            //–À˜H¶¬ƒf[ƒ^æ“¾
+            Size = maze.GetStageSize();
+            mazeData = maze.GetMazeData();
+
+            //–À˜H¶¬
+            CreateMazeStage();
+        }
+
+        private void ResetStage()
         {
             Size = 0;
             mazeData = null;
@@ -62,6 +68,11 @@ namespace MazeGame
             // –À˜Hî•ñíœ
             maze = Maze.Instance;
 
+        }
+
+        public void Destroy()
+        {
+            navMesh.RemoveData();
         }
 
 
@@ -105,9 +116,6 @@ namespace MazeGame
                     }
                 }
             }
-            // ƒGƒlƒ~[‚Ì¶¬
-            CreateEnemy(num);
-
         }
 
         //°‚Ì¶¬
@@ -257,31 +265,6 @@ namespace MazeGame
             wall.tag = "Indestructible";
             MoveCenterPosition(wall);
             wall.transform.SetParent(rootObject.transform, false);
-        }
-        //“G‚Ì¶¬
-        private void CreateEnemy(int generateNum)
-        {
-            LevelManager.Level level = LevelManager.Instance.GetLevel();
-            int generateEnemy = (int)level/2 + 2;
-            // Å’áŒÀ‚ÍƒŒƒxƒ‹‚É‡‚í‚¹‚Ä¶¬‚³‚¹‚é
-            for(; generateEnemy > 0; generateEnemy--)
-            {
-                generateNum--;
-                EnemyManager.Instance.GenerateEnemy();
-            }
-
-            for (;generateNum>0;generateNum--)
-            {
-                int randam = UnityEngine.Random.Range(0, 255);
-                if(randam < enemyRange)
-                {
-                    EnemyManager.Instance.GenerateEnemy();
-                }
-                else
-                {
-                    EnemyManager.Instance.GenerateStatue();
-                }
-            }
         }
 
         // ƒAƒCƒeƒ€‚Ì¶¬

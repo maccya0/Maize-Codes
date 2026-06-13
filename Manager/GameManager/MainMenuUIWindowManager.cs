@@ -5,14 +5,12 @@ using UnityEngine.EventSystems;
 
 namespace MazeGame
 {
-    public class UIWindowManager : BaseManager<UIWindowManager>
+    public class MainMenuUIWindowManager : BaseManager<MainMenuUIWindowManager>
     {
         [SerializeField] private GameObject configWindow;
-        [SerializeField] private GameObject resultWindow;
-        [SerializeField] private GameObject gameUI;
+        [SerializeField] private GameObject menuWindow;
         [SerializeField] private GameObject levelUI;
         [SerializeField] private GameObject explainUI;
-
 
         private GameObject[] allWindows;
 
@@ -21,7 +19,7 @@ namespace MazeGame
             base.Awake();
             if (Instance != this) return;
 
-            allWindows = new GameObject[] { configWindow, resultWindow, gameUI, levelUI, explainUI };
+            allWindows = new GameObject[] { configWindow, menuWindow, levelUI, explainUI };
         }
 
         private void SwitchWindow(GameObject targetWindow)
@@ -35,11 +33,11 @@ namespace MazeGame
             }
         }
 
-        public void ActiveConfigWindow() => SwitchWindow(configWindow);
 
-        public void ActiveResultWindow() => SwitchWindow(resultWindow);
-        public void ActiveGameUI() => SwitchWindow(gameUI);
+
         public void ActiveLevelUI() => SwitchWindow(levelUI);
         public void ActiveLevelExplain() => SwitchWindow(explainUI);
+        public void ActiveConfigWindow() => SwitchWindow(configWindow);
+        public void ActiveMenuWindow() => SwitchWindow(menuWindow);
     }
 }

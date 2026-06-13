@@ -34,7 +34,7 @@ namespace MazeGame
             public const float rootZ = 220f;
             public const string wallTag = "Wall";
             public const string indestructibleWallTag = "Indestructible";
-            public enum GameState
+            public enum JudgeState
             {
                 None,
                 Win,

@@ -12,24 +12,28 @@ namespace MazeGame
         [SerializeField] ChargeGauge chargeGauge;
         private Coroutine coroutine;
 
-        protected override void Awake()
+        public override void Init(PlayerController _playerController, InputSystem_Actions _actions)
         {
-            base.Awake();
-        }
-
-        private void OnEnable()
-        {
+            base.Init(_playerController, _actions);
             actions.Player.Destroy.performed += OnDestroyPerformed;
             actions.Player.Destroy.canceled += OnDestroyCanceled;
+        }
+
+        public override void Begin()
+        {
+            base.Begin();
             preHitObject = null;
             particleObject = null;
         }
 
-        private void OnDisable()
+        public override void Cleanup()
         {
             StopAllCoroutines();
-            actions.Player.Destroy.performed -= OnDestroyPerformed;
-            actions.Player.Destroy.canceled -= OnDestroyCanceled;
+            if (actions != null)
+            {
+                actions.Player.Destroy.performed -= OnDestroyPerformed;
+                actions.Player.Destroy.canceled -= OnDestroyCanceled;
+            }
             actions = null;
         }
 
@@ -74,6 +78,7 @@ namespace MazeGame
             }
             // スキル実行確定
             SkillExecute();
+            chargeGauge.SetGauge(0.0f);
             Vector3 actionPos = target.transform.position;
             InstantiateAndDestroy(skillData.particle, actionPos, Quaternion.identity,skillData.sound);
             Destroy(target);
@@ -95,6 +100,8 @@ namespace MazeGame
                 return null;
             }
         }
+
+
         public void OnDestroyCanceled(InputAction.CallbackContext context)
         {
             StopAction();

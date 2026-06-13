@@ -1,164 +1,142 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static MazeGame.MazeGameConstants.MazeConstants;
 using System.Collections.Generic;
 using System.Collections;
+using System.Threading.Tasks;
 
 namespace MazeGame
 {
-    public class GameDirector : MonoBehaviour
+    public class MazeGameDirector : BaseDirector<GameDirector>
     {
-        // ゲーム進捗関連
-        [SerializeField] private ProgressManager progressManager;
-        public bool IsAllCheckedPoints { get; private set; }
-        [SerializeField] private JudgeManager judgeManager;
-        [SerializeField] private float eventTime;
-        [SerializeField] private MazeTimeEvent[] randamTimeEvents;
-        [SerializeField] private MazeOnceEvent[] randamOnceEvents;
-        [SerializeField] private StageCreate stageCreate;
-        [SerializeField] private List<SoundData> gameBgm;
-        private int onceEventTotal;
-        private int timeEventTotal;
-        private float erapsedTime;
-        private GameManager gameManager;
+        private StageGenerater StageGenerater;
+        private PlayerGenerater PlayerGenerater;
+        private UIGenerater UIGenerater;
+        private GameSystemGenerater GameSystemGenerater;
+        private SystemDirector SystemDirector;
+        private CheckPointProgress CheckPointProgress;
 
-        private void Awake()
+        private bool isGamePlaying;
+        public async Task Init()
         {
-            if (!SceneManager.GetSceneByName("BackGroundScene").isLoaded)
+            isGamePlaying = false;
+            SystemDirector = UnityEngine.Object.FindAnyObjectByType<SystemDirector>();
+            if (SystemDirector == null)
             {
-                SceneManager.LoadSceneAsync("BackGroundScene", LoadSceneMode.Additive);
+                throw new Exception("Not Find A SystemDirector");
             }
-            SoundManager.Instance.CanPlaySound = false;
+            DirectorInit();
+            await DirectorStart();
+            isGamePlaying = true;
+        }
 
-            CheckoutException();
-            IsAllCheckedPoints = false;
-            progressManager.CheckedAllPoints += CompleateAllChecked;
-            judgeManager.SetState += SetGameState;
+        public void Tick()
+        {
+            if (!isGamePlaying) return;
+            DirectorRunTime();
+        }
 
-            gameManager = GameManager.Instance;
-            erapsedTime = 0;
-            InitMaze();
-            timeEventTotal = 0;
-            foreach (var timeEvent in randamTimeEvents)
+        public void Destroy()
+        {
+            DirectorDestroy();
+        }
+
+        protected override void DirectorInit()
+        {
+            StageGenerater = new StageGenerater(SystemDirector.GetLevelSelection());
+            GameSystemGenerater = new GameSystemGenerater();
+            PlayerGenerater = new PlayerGenerater();
+            UIGenerater = new UIGenerater(SystemDirector.GetLevelSelection());
+        }
+        protected override async Task DirectorStart()
+        {
+            // 初期化関係
+            await GameInit();
+
+            // 開始関連
+            await GameStart();
+        }
+
+        private Task GameInit()
+        {
+            // 初期化関連はゲーム全体→機能の順で設定していく
+            // System系設定
+            GameSystemGenerater.Init();
+            // Stage系設定
+            StageGenerater.Init();
+            // Player系設定
+            PlayerGenerater.Init();
+            // UI系設定
+            UIGenerater.Init();
+            return Task.CompletedTask;
+        }
+
+        private Task GameStart()
+        {
+            // 開始関連はゲーム全体→機能の順で設定していく
+            // System系設定
+            GameSystemGenerater.Generated();
+            var judger = GameSystemGenerater?.GetGameJudger();
+            if (judger != null)
             {
-                timeEventTotal += timeEvent.rateVal;
+                judger.OnGameFinished += HandleGameFinished;
             }
-            onceEventTotal = 0;
-            foreach (var onceEvent in randamOnceEvents)
+            // Stage系設定
+            StageGenerater.Generated();
+            // Player系設定
+            PlayerGenerater.Generated();
+            // UI系設定
+            UIGenerater.Generated();
+            return Task.CompletedTask;
+        }
+
+        protected override void DirectorRunTime()
+        {
+            // 更新関連はゲーム全体→機能の順で設定していく
+            // System系更新
+            GameSystemGenerater.Tick();
+            var judger = GameSystemGenerater?.GetGameJudger();
+            if (judger == null)
             {
-                onceEventTotal += onceEvent.rateVal;
+                judger.OnGameFinished -= HandleGameFinished;
             }
+            // Stage系更新
+            StageGenerater.Tick();
+            // Player系更新
+            PlayerGenerater.Tick();
+            // UI系更新
+            UIGenerater.Tick();
         }
 
-        private IEnumerator Start()
+        private void HandleGameFinished(bool judge)
         {
-            yield return new WaitForSecondsRealtime(1.0f);
-            SoundManager.Instance.CanPlaySound = true;
-            int randamBGM = UnityEngine.Random.Range(0, gameBgm.Count);
-            SoundManager.Instance.StartBgm(gameBgm[randamBGM]);
-        }
-
-        private void OnDestroy()
-        {
-            // ゲーム進捗関連のコールバック停止
-            progressManager.CheckedAllPoints -= CompleateAllChecked;
-            judgeManager.SetState -= SetGameState;
-        }
-
-        public void InitializeGame()
-        {
-            InitMaze();
-        }
-
-        private void SetGameState(GameState state)
-        {
-            gameManager.SetGameState(state);
-        }
-
-        private void CompleateAllChecked()
-        {
-            IsAllCheckedPoints = true;
-        }
-
-
-        private void CheckoutException()
-        {
-            if (progressManager == null)
+            if (!isGamePlaying) return;
+            isGamePlaying = false;
+            var judger = GameSystemGenerater?.GetGameJudger();
+            if (judger == null)
             {
-                throw new InvalidOperationException("ProgressManager未登録");
+                judger.OnGameFinished -= HandleGameFinished;
             }
-            if (judgeManager == null)
-            {
-                throw new InvalidOperationException("JudgeManager");
-            }
+            GameSystemGenerater.EndGame();
+            StageGenerater.EndGame();
+            PlayerGenerater.EndGame();
+            UIGenerater.EndGame();
         }
 
-
-
-        private void Update()
+        protected override Task DirectorDestroy()
         {
-            gameManager.CheckGameState();
-            GenerateEvent();
+            // 削除処理は機能→ゲーム全体の順で設定していく
+            // UI系削除
+            UIGenerater.Destroy();
+            // Player系削除
+            PlayerGenerater.Destroy();
+            // Stage系削除
+            StageGenerater.Destroy();
+            // System系削除
+            GameSystemGenerater.Destroy();
+            return Task.CompletedTask;
         }
 
-        private void GenerateEvent()
-        {
-            try
-            {
-                erapsedTime += Time.deltaTime;
-                if (erapsedTime <= eventTime) return;
-                erapsedTime = 0;
-                bool target = UnityEngine.Random.Range(0, 2) == 1 ? true : false;
-                MazeEvent mazeEvent = null;
-                if (target)
-                {
-                    int randamRate = UnityEngine.Random.Range(0, timeEventTotal);
-                    int weight = 0;
-                    foreach (var timeEvent in randamTimeEvents)
-                    {
-                        weight += timeEvent.rateVal;
-                        if (randamRate < weight)
-                        {
-                            mazeEvent = timeEvent;
-                            break;
-                        }
-                    }
-                    Debug.Log("SelectOnceEvent");
-                }
-                else
-                {
-                    int randamRate = UnityEngine.Random.Range(0, onceEventTotal);
-                    int weight = 0;
-                    foreach (var onceEvent in randamOnceEvents)
-                    {
-                        weight += onceEvent.rateVal;
-                        if (randamRate < weight)
-                        {
-                            mazeEvent = onceEvent;
-                            break;
-                        }
-                    }
-                    Debug.Log("SelectTimeEvent");
-                }
-                if (mazeEvent != null)
-                {
-                    mazeEvent.TriggerEvent();
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Debug.LogException(ex);
-            }
-        }
-
-        private void InitMaze()
-        {
-            Maze maze = Maze.Instance;
-            MazeData mazeData = LevelManager.Instance.GetCurrentMazeData();
-            maze.MakeMaze(mazeData.StageSize, mazeData.TrapNum, mazeData.EnemyNum,mazeData.ExtendRate, mazeData.CheckPointNum, mazeData.ItemNum);
-            stageCreate.Initialize();
-        }
     }
 }

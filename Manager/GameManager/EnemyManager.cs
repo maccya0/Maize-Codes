@@ -14,6 +14,8 @@ public class EnemyManager : BaseManager<EnemyManager>
     private List<GameObject> EnemyList;
     private List<GameObject> StatueList;
 
+    private int currentStageId;
+
     protected override void Awake()
     {
         base.Awake();
@@ -25,6 +27,7 @@ public class EnemyManager : BaseManager<EnemyManager>
         EnemyList = new List<GameObject>();
         StatueList = new List<GameObject>();
         SpownPoints = new List<Vector3>();
+        currentStageId = 0;
     }
 
     public void ManagerStart(int MaxEnemyNum, int MaxStatueNum, List<Vector3> SpownPoint)
@@ -37,8 +40,9 @@ public class EnemyManager : BaseManager<EnemyManager>
     public override void  ManagerStart()
     {
         base.ManagerStart();
+        currentStageId++;
         // ˆê“x¶¬‚µ‚½“G‚Ííœ‚·‚é
-        foreach(var enemy in EnemyList)
+        foreach (var enemy in EnemyList)
         {
             if(enemy == null)continue;
             Destroy(enemy);
@@ -51,6 +55,30 @@ public class EnemyManager : BaseManager<EnemyManager>
         }
         StatueList.Clear();
         SpownPoints.Clear();
+    }
+
+    public void GenerateEnemys(uint rate ,int generateNum,int levelNum)
+    {
+        int generateEnemy =levelNum / 2 + 2;
+        // Å’áŒÀ‚ÍƒŒƒxƒ‹‚É‡‚í‚¹‚Ä¶¬‚³‚¹‚é
+        for (; generateEnemy > 0; generateEnemy--)
+        {
+            generateNum--;
+            EnemyManager.Instance.GenerateEnemy();
+        }
+
+        for (; generateNum > 0; generateNum--)
+        {
+            int randam = UnityEngine.Random.Range(0, 255);
+            if (randam < rate)
+            {
+                EnemyManager.Instance.GenerateEnemy();
+            }
+            else
+            {
+                EnemyManager.Instance.GenerateStatue();
+            }
+        }
     }
 
     public void RegisterSpownPoints(Vector3 pos)
@@ -114,7 +142,7 @@ public class EnemyManager : BaseManager<EnemyManager>
         int indexPos = UnityEngine.Random.Range(0, SpownPoints.Count);
         GameObject enemy = Instantiate(Enemies[indexEnemy], SpownPoints[indexPos], Quaternion.identity);
         EnemyList.Add(enemy);
-        InitializeEnemyDataDelayed(enemy);
+        InitializeEnemyDataDelayed(enemy, currentStageId);
         return enemy;
     }
 
@@ -127,7 +155,7 @@ public class EnemyManager : BaseManager<EnemyManager>
         int indexPos = UnityEngine.Random.Range(0, SpownPoints.Count);
         GameObject enemy = Instantiate(enemyPrefab, SpownPoints[indexPos], Quaternion.identity);
         EnemyList.Add(enemy);
-        InitializeEnemyDataDelayed(enemy);
+        InitializeEnemyDataDelayed(enemy, currentStageId);
         return enemy;
     }
 
@@ -144,7 +172,7 @@ public class EnemyManager : BaseManager<EnemyManager>
     }
 
 
-    private async void InitializeEnemyDataDelayed(GameObject enemy)
+    private async void InitializeEnemyDataDelayed(GameObject enemy, int stageId)
     {
         // ”ñ“¯Šúˆ—‚ÅAgent¶¬‚Ü‚Å‘Ò‹@‚³‚¹‚é
         if (enemy == null) return;
@@ -153,8 +181,11 @@ public class EnemyManager : BaseManager<EnemyManager>
         
         while (enemy != null && info != null && !info.IsGeneratedAgent())
         {
+            if (stageId != currentStageId) return;
             await Task.Yield();
         }
+        if (stageId != currentStageId || enemy == null || info == null) return;
+
         for (int i = 0; i < PatrolPoints.Count; i++)
         {
             info.RegisterPatrolPoint(PatrolPoints[i]);

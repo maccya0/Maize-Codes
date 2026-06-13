@@ -46,7 +46,7 @@ namespace MazeGame
             StartGame();
         }
 
-        private void Update()
+        public void Tick()
         {
             if(isTimeUp) { return; }
             erapsedTime -= (Time.deltaTime * accele);

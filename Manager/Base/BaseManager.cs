@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Threading.Tasks;
 
 public abstract class BaseManager<T> : MonoBehaviour where T : MonoBehaviour
 {
@@ -43,7 +44,10 @@ public abstract class BaseManager<T> : MonoBehaviour where T : MonoBehaviour
     {
 
     }
-
+    public virtual Task ManagerStartAsync()
+    {
+        return Task.CompletedTask;
+    }
     public virtual void ManagerDestroy()
     {
     }

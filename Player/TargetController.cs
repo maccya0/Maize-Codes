@@ -13,15 +13,23 @@ namespace MazeGame
         private GameObject preTarget;
         public event Action<GameObject> OnChangeEvent;
 
-        private void Awake()
+        public void Init()
+        {
+        }
+
+        public void Begin()
         {
             target = null;
             preTarget = null;
         }
 
-        private void Update()
+        public void Tick()
         {
             UpdateTargeting();
+        }
+
+        public void Destroy()
+        {
         }
 
         private void UpdateTargeting()

@@ -7,23 +7,25 @@ namespace MazeGame
 {
     public class TransparentAction : SkillAction
     {
-        protected override void Awake()
+        public override void Init(PlayerController _playerController, InputSystem_Actions _actions)
         {
-            base.Awake();
-        }
-
-        private void OnEnable()
-        {
+            base.Init(_playerController, _actions);
             actions.Player.Transparent.performed += OnTransparentPerformed;
         }
 
-        private void OnDisable()
+        public override void Begin()
+        {
+            base.Begin();
+        }
+
+        public override void Cleanup()
         {
             StopAllCoroutines();
-            if(actions != null)
+            if (actions != null)
             {
                 actions.Player.Transparent.performed -= OnTransparentPerformed;
             }
+            actions = null;
         }
 
         public void OnTransparentPerformed(InputAction.CallbackContext context)
