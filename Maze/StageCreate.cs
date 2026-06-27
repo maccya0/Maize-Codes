@@ -1,8 +1,10 @@
-using System;
+Ôªøusing System;
+using System.Collections.Generic;
 using Unity.AI.Navigation;
+using Unity.Collections;
+using Unity.Jobs;
+using Unity.VisualScripting.Dependencies.NCalc;
 using UnityEngine;
-using static MazeGame.MazeGameConstants.MazeConstants;
-using static MazeGame.MazeGameConstants;
 
 namespace MazeGame
 {
@@ -13,23 +15,24 @@ namespace MazeGame
         [SerializeField] public NavMeshSurface navMesh;
         [SerializeField] private GameObject itemBox;
         [SerializeField][Range(0, 255)] private uint enemyRange = 192;
+        [SerializeField] StageConstants StageConstants;
 
         private GameObject goalObject;
         private GameObject startObject;
         private GameObject[] checkPoints;
 
-        /* èàóùéûã§í ÉfÅ[É^ */
+        /* Âá¶ÁêÜÊôÇÂÖ±ÈÄö„Éá„Éº„Çø */
         private int Size;
-        private MazeObjKinds[,] mazeData;
+        private MazeConstants.MazeObjKinds[,] mazeData;
         private Maze maze;
         private GameObject rootObject;
-        private Vector3 rootPos = new Vector3(MazeConstants.rootX, MazeConstants.rootY, MazeConstants.rootZ);
+        private Vector3 rootPos = new Vector3(MazeGameConstants.MazeConstants.rootX, MazeGameConstants.MazeConstants.rootY, MazeGameConstants.MazeConstants.rootZ);
 
         public void Init(GameObject _goalObject , GameObject _startObject , GameObject[] _checkPointObjects)
         {
             if (navMesh == null)
             {
-                throw new InvalidOperationException("É^Å[ÉQÉbÉgÇ™ñ¢ê›íË");
+                throw new InvalidOperationException("„Çø„Éº„Ç≤„ÉÉ„Éà„ÅåÊú™Ë®≠ÂÆö");
             }
             goalObject = _goalObject;
             startObject = _startObject;
@@ -42,11 +45,11 @@ namespace MazeGame
         {
             ResetStage();
 
-            //ñ¿òHê∂ê¨ÉfÅ[É^éÊìæ
+            //Ëø∑Ë∑ØÁîüÊàê„Éá„Éº„ÇøÂèñÂæó
             Size = maze.GetStageSize();
             mazeData = maze.GetMazeData();
 
-            //ñ¿òHê∂ê¨
+            //Ëø∑Ë∑ØÁîüÊàê
             CreateMazeStage();
         }
 
@@ -56,16 +59,16 @@ namespace MazeGame
             mazeData = null;
             navMesh.RemoveData();
 
-            // ÉXÉeÅ[ÉWçÌèú
+            // „Çπ„ÉÜ„Éº„Ç∏ÂâäÈô§
             if (rootObject != null)
             {
                 DestroyImmediate(rootObject);
             }
             rootObject = new GameObject();
-            rootObject.name = "MazeRoot";
+            rootObject.name = StageConstants.RootName;
             rootObject.transform.position = rootPos;
 
-            // ñ¿òHèÓïÒçÌèú
+            // Ëø∑Ë∑ØÊÉÖÂ†±ÂâäÈô§
             maze = Maze.Instance;
 
         }
@@ -79,37 +82,110 @@ namespace MazeGame
 
         private void CreateMazeStage()
         {
+            int totalCells = Size * Size;
+            var stageConst = StageConstants;
+
+            NativeArray<MazeConstants.MazeObjKinds> flattenedMazeData = new NativeArray<MazeConstants.MazeObjKinds>(totalCells, Allocator.TempJob);
+            NativeArray<byte> randomValues = new NativeArray<byte>(totalCells, Allocator.TempJob);
+
+            NativeArray<StageSpawnData> planeOutputs = new NativeArray<StageSpawnData>(totalCells, Allocator.TempJob);
+            NativeArray<StageSpawnData> wallOutputs = new NativeArray<StageSpawnData>(totalCells, Allocator.TempJob);
+            NativeArray<StageSpawnData> itemOutputs = new NativeArray<StageSpawnData>(totalCells, Allocator.TempJob);
+
             for (int cloop = 0; cloop < Size; cloop++)
             {
                 for (int rloop = 0; rloop < Size; rloop++)
                 {
-                    byte rand = (byte)UnityEngine.Random.Range(0, 255);
-                    CreatePlane(cloop, rloop, rand);    //è∞ÇÃê∂ê¨
-
+                    int idx = cloop * Size + rloop;
+                    flattenedMazeData[idx] = mazeData[cloop, rloop]; 
                 }
             }
-            for (int cloop = 0; cloop < Size; cloop++)
+
+            MazeGenerationJob generationJob = new MazeGenerationJob
             {
-                for (int rloop = 0; rloop < Size; rloop++)
-                {
-                    byte rand = (byte)UnityEngine.Random.Range(0, 255);
-                    CreateAlphaWall(cloop, rloop); //ìßñæÇ»ï«äOé¸Ç…ê∂ê¨
-                    CreateWall(cloop, rloop, rand); //ï«ÇÃê∂ê¨
-                    CreateItem(cloop, rloop);  // ÉAÉCÉeÉÄÇÃê∂ê¨
-                }
-            }
-            CreateAlphaCeiling();   //ìßñæÇ»ìVà‰Çê∂ê¨
-            CreateStageGimic(); //ÉXÉeÅ[ÉWÉMÉ~ÉbÉNÇÃê∂ê¨
-            navMesh.BuildNavMesh();  //ÉiÉrÉÅÉbÉVÉÖÇÉrÉãÉhÇ∑ÇÈ
+                Size = Size,
+                PosOffset = StageConstants.PosOffset,
+                MazeDataFlattened = flattenedMazeData,
+                RandomValues = randomValues,
+                PlaneOutputs = planeOutputs,
+                WallOutputs = wallOutputs,
+                ItemOutputs = itemOutputs
+            };
 
-            // ÉiÉrÉÅÉbÉVÉÖÉGÅ[ÉWÉFÉìÉgÇÃÇΩÇﬂÇ…ÉiÉrÉÅÉbÉVÉÖÇÉrÉãÉhÇµÇΩå„Ç…Ç∑ÇÈ
-            // êÊÇ∏ÇÕÉXÉ|Å[Éìà íuÇåàíËÇ∑ÇÈ
+            JobHandle jobHandle = generationJob.Schedule(totalCells, 1);
+            jobHandle.Complete();
+
+
+            for (int i = 0; i < totalCells; i++)
+            {
+                int c = i / Size;
+                int r = i % Size;
+
+                // --- Â∫ä„ÅÆÁîüÊàê ---
+                StageSpawnData pData = planeOutputs[i];
+                GameObject plane;
+                if (pData.spawnType == MazeConstants.MazeObjKinds.ETrapPath) // „Éà„É©„ÉÉ„Éó
+                    plane = Instantiate(stageObjData.PlaneTrapList[(pData.prefabIndex % stageObjData.PlaneTrapList.Count)]);
+                else
+                    plane = Instantiate(stageObjData.PlanePrehab);
+
+                plane.transform.position = pData.position;
+                SetStageInfo(plane, c, r);
+
+                // --- Â£Å„ÅÆÁîüÊàê ---
+                StageSpawnData wData = wallOutputs[i];
+                if (wData.spawnType != MazeConstants.MazeObjKinds.None)
+                {
+                    GameObject wall = null;
+                    if (wData.spawnType == MazeConstants.MazeObjKinds.EUnBreakWall) // ‰∏çÂèØÂ£ä
+                    {
+                        wall = Instantiate(stageObjData.UnBreakableWall);
+                        wall.tag = "Indestructible";
+                    }
+                    else if (wData.spawnType == MazeConstants.MazeObjKinds.ETrapWall) // ÈÄöÂ∏∏Ôºà‚ÄªÂÆüÈöõ„ÅØJobÂÜÖ„ÅßÁ¥∞ÂàÜÂåñÂèØËÉΩÔºâ
+                    {
+                        wall = Instantiate(stageObjData.NormalWall);
+                        wall.tag = MazeGameConstants.MazeConstants.wallTag;
+                    }
+
+                    if (wall != null)
+                    {
+                        wall.transform.position = wData.position;
+                        wall.transform.rotation = wData.rotation;
+                        SetStageInfo(wall, c, r);
+                    }
+                }
+                // --- „Ç¢„Ç§„ÉÜ„É†„ÅÆÁîüÊàê ---
+                StageSpawnData iData = itemOutputs[i];
+                if (iData.spawnType == MazeConstants.MazeObjKinds.EItem)
+                {
+                    GameObject item = Instantiate(itemBox);
+                    item.transform.position = iData.position;
+                    MoveCenterPosition(item);
+                    item.transform.SetParent(rootObject.transform, false);
+                }
+
+                // Â§ñÂë®„ÅÆÈÄèÊòéÂ£Å„ÇÇ„Åì„Åì„ÅßÁîüÊàê
+                CreateAlphaWall(c, r);
+            }
+            flattenedMazeData.Dispose();
+            randomValues.Dispose();
+            planeOutputs.Dispose();
+            wallOutputs.Dispose();
+            itemOutputs.Dispose();
+
+            CreateAlphaCeiling();   //ÈÄèÊòé„Å™Â§©‰∫ï„ÇíÁîüÊàê
+            CreateStageGimic(); //„Çπ„ÉÜ„Éº„Ç∏„ÇÆ„Éü„ÉÉ„ÇØ„ÅÆÁîüÊàê
+            navMesh.BuildNavMesh();  //„Éä„Éì„É°„ÉÉ„Ç∑„É•„Çí„Éì„É´„Éâ„Åô„Çã
+
+            // „Éä„Éì„É°„ÉÉ„Ç∑„É•„Ç®„Éº„Ç∏„Çß„É≥„Éà„ÅÆ„Åü„ÇÅ„Å´„Éä„Éì„É°„ÉÉ„Ç∑„É•„Çí„Éì„É´„Éâ„Åó„ÅüÂæå„Å´„Åô„Çã
+            // ÂÖà„Åö„ÅØ„Çπ„Éù„Éº„É≥‰ΩçÁΩÆ„ÇíÊ±∫ÂÆö„Åô„Çã
             int num = 0;
             for (int cloop = 0; cloop < Size; cloop++)
             {
                 for (int rloop = 0; rloop < Size; rloop++)
                 {
-                    if(mazeData[cloop, rloop] == MazeObjKinds.EEnemyPos)
+                    if(mazeData[cloop, rloop] == MazeConstants.MazeObjKinds.EEnemyPos)
                     {
                         EnemyManager.Instance.RegisterSpownPoints(maze.stageObjects[cloop, rloop].transform.position);
                         num++;
@@ -118,137 +194,14 @@ namespace MazeGame
             }
         }
 
-        //è∞ÇÃê∂ê¨
-        private void CreatePlane(int column, int row, byte rand)
-        {
-            GameObject plane;
-            //ñ¿òHÇÃê∂ê¨ÉfÅ[É^Ç™ÉgÉâÉbÉvè∞à»äOÇéwÇµÇƒÇ¢ÇÈèÍçá
-            if (mazeData[column, row] != MazeObjKinds.ETrapPath)
-            {
-                plane = Instantiate(stageObjData.PlanePrehab);
-
-            }
-            else
-            {
-                plane = Instantiate(stageObjData.PlaneTrapList[(rand % stageObjData.PlaneTrapList.Count)]);
-            }
-            plane.transform.position = new Vector3(column * PosOffset, 0, row * PosOffset);
-            SetStageInfo(plane, column, row);
-        }
-
-        //ï«ÇÃê∂ê¨
-        private void CreateWall(int column, int row, byte rand)
-        {
-            //ï«à»äOÇÃéûÇÕâΩÇ‡ÇµÇ»Ç¢
-            if (!(mazeData[column, row] == MazeObjKinds.EBreakWall || mazeData[column, row] == MazeObjKinds.ETrapWall || mazeData[column, row] == MazeObjKinds.EUnBreakWall)) return;
-            GameObject wall = null;
-
-            //élã˜ÇÕîjâÛïsâ¬ÇÃï«orÉXÉeÅ[ÉWÉMÉ~ÉbÉN
-            if (row == 0 || row == Size - 1 || column == 0 || column == Size - 1)
-            {
-                wall = Instantiate(stageObjData.UnBreakableWall);
-                wall.transform.position = new Vector3(column * PosOffset, 0, row * PosOffset);
-                wall.tag = "Indestructible";
-            }
-            else
-            {
-                //îjâÛâ¬î\ÇÃï«Ç»ÇÁÇªÇÃÇ‹Ç‹ê∂ê¨
-                if (mazeData[column, row] == MazeObjKinds.EBreakWall)
-                {
-                    Direct direct = maze.JudeAround(column, row);
-                    //é¸àÕÇ™ï«Ç…Ç»Ç¡ÇƒÇ¢ÇÈéûÇÕí èÌÇÃï«
-                    if (direct == Direct.Siege)
-                    {
-                        wall = Instantiate(stageObjData.NormalWall);
-                    }
-                    else if (maze.JudgeDeadEnd(column, row, Maze.CheckSize.Around) || maze.JudgeTJunction(column, row, Maze.CheckSize.Around) || maze.JudgeCorner(column, row, Maze.CheckSize.Around))
-                    {
-                        //èIÇÌÇËÇÃéûÇÕÉâÉCÉgÇê∂ê¨
-                        wall = Instantiate(stageObjData.LampWall);
-                        if (direct == Direct.South)
-                        {
-                            wall.transform.Rotate(new Vector3(0, 270, 0), Space.World);
-                        }
-                        else if (direct == Direct.North)
-                        {
-                            wall.transform.Rotate(new Vector3(0, 90, 0), Space.World);
-                        }
-                        else if (direct == Direct.East)
-                        {
-                            wall.transform.Rotate(new Vector3(0, 0, 0), Space.World);
-                        }
-                        else if (direct == Direct.West)
-                        {
-                            wall.transform.Rotate(new Vector3(0, 180, 0), Space.World);
-                        }
-                    }
-                    else
-                    {
-                        //ÉâÉìÉ_ÉÄÇ≈ï«Çê∂ê¨Ç∑ÇÈ
-                        byte temp = (byte)UnityEngine.Random.Range(2, stageObjData.WallPrehabList.Count);
-                        wall = Instantiate(stageObjData.WallPrehabList[temp]);
-                        if (direct == Direct.South || direct == Direct.North)
-                        {
-                            wall.transform.Rotate(new Vector3(0, 90, 0), Space.World);
-
-                        }
-                        else
-                        {
-                            wall.transform.Rotate(new Vector3(0, 0, 0), Space.World);
-                        }
-                    }
-                    wall.transform.position = new Vector3(column * PosOffset,0, row * PosOffset);
-                    wall.tag = "Wall";
-                }
-                //„©ÇÃèÍçá
-                else if (mazeData[column, row] == MazeObjKinds.ETrapWall)
-                {
-                    Direct direct = maze.JudeAround(column, row);
-                    //élï˚ÇÃÇ«Ç±Ç©ÇÃå¸Ç´orê›íËÇ≈Ç´ÇÈå¸Ç´Ç™Ç»Ç≠Ç»ÇÈÇ‹Ç≈óêêîÇ≈å¸Ç´ÇåàíËÇ∑ÇÈ
-                    if (direct == Direct.Siege)
-                    {
-                        //ëOå„ç∂âEÇ™ï«Ç≈ê›íËèoóàÇÈå¸Ç´Ç™Ç»Ç¢
-                        wall = Instantiate(stageObjData.WallPrehabList[0]);
-                        wall.transform.position = new Vector3(column * PosOffset, 0, row * PosOffset);
-                        wall.tag = "Wall";
-                    }
-                    else
-                    {
-                        //å©Ç¬Ç©Ç¡ÇΩï˚å¸Ç≈ê›íËÇ∑ÇÈ
-                        wall = Instantiate(stageObjData.WallTrapList[rand % stageObjData.WallTrapList.Count]);
-                        wall.transform.position = new Vector3(column * PosOffset, 0, row * PosOffset);
-                        if (direct == Direct.South)
-                        {
-                            wall.transform.Rotate(new Vector3(0, 270, 0), Space.World);
-                        }
-                        else if (direct == Direct.North)
-                        {
-                            wall.transform.Rotate(new Vector3(0, 90, 0), Space.World);
-                        }
-                        else if (direct == Direct.East)
-                        {
-                            wall.transform.Rotate(new Vector3(0, 0, 0), Space.World);
-                        }
-                        else if (direct == Direct.West)
-                        {
-                            wall.transform.Rotate(new Vector3(0, 180, 0), Space.World);
-                        }
-                        wall.GetComponent<BombBlock>().SetBombInfo(direct);
-                        wall.tag = "Wall";
-
-                    }
-                }
-            }
-            SetStageInfo(wall, column, row);
-        }
         private void CreateAlphaWall(int column, int row)
         {
-            //élã˜Ç≈ê∂ê¨
+            //ÂõõÈöÖ„ÅßÁîüÊàê
             if (row == 0 || row == Size - 1 || column == 0 || column == Size - 1)
             {
                 GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 wall.GetComponent<Renderer>().enabled = false;
-                wall.transform.localPosition = new Vector3(column * PosOffset, StageHeightLimit, row * PosOffset);
+                wall.transform.localPosition = new Vector3(column * StageConstants.PosOffset, StageConstants.StageHeightLimit, row * StageConstants.PosOffset);
                 wall.tag = "Indestructible";
                 MoveCenterPosition(wall);
                 wall.transform.SetParent(rootObject.transform,false);
@@ -261,80 +214,98 @@ namespace MazeGame
             GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             wall.GetComponent<Renderer>().enabled = false;
             wall.transform.localScale = new Vector3(Size, 1.0f, Size);
-            wall.transform.localPosition = new Vector3((float)((Size - PosOffset) / 2), StageHeightLimit, (float)((Size - PosOffset) / 2));
+            wall.transform.localPosition = new Vector3((float)((Size - StageConstants.PosOffset) / 2), StageConstants.StageHeightLimit, (float)((Size - StageConstants.PosOffset) / 2));
             wall.tag = "Indestructible";
             MoveCenterPosition(wall);
             wall.transform.SetParent(rootObject.transform, false);
         }
 
-        // ÉAÉCÉeÉÄÇÃê∂ê¨
-        private void CreateItem(int column, int row)
-        {
-            //ìGÇÃê∂ê¨à íuÇÃÇ›èàóù
-            if (mazeData[column, row] != MazeObjKinds.EItem) return;
-
-            GameObject item;
-            item = Instantiate(itemBox);
-            item.transform.position = new Vector3(column * PosOffset, 0, row * PosOffset);
-            MoveCenterPosition(item);
-            item.transform.SetParent(rootObject.transform, false);
-
-        }
         private void CreateStageGimic()
         {
+            if (goalObject == null || startObject == null)
+            {
+                Debug.LogError("Goal or Start object is missing!");
+                return;
+            }
+
+            var stageConst = StageConstants;
+
             for (int row = 0; row < Size - 1; row++)
             {
-                if (mazeData[Size - 1, row] == MazeObjKinds.EGoal)
+                if (mazeData[Size - 1, row] == MazeConstants.MazeObjKinds.EGoal)
                 {
-                    goalObject.transform.position = new Vector3((Size - 1) * PosOffset + 4.5f, 0, (row + 1) * PosOffset + 0.35f) + rootPos;
-                    goalObject.transform.Rotate(new Vector3(0, 180, 0));
-                    MoveCenterPosition(goalObject);
+                    Vector3 goalPos = new Vector3(
+                        (Size - 1) * stageConst.PosOffset + stageConst.GoalGimicOfsetHeight,
+                        0,
+                        (row + 1) * stageConst.PosOffset + stageConst.GoalGimicOfsetVertcal
+                    );
+                    SetupGimicTransform(goalObject, goalPos, 180f);
                     break;
                 }
             }
+
             for (int row = 0; row < Size - 1; row++)
             {
-                if (mazeData[0, row] == MazeObjKinds.EStart)
+                if (mazeData[0, row] == MazeConstants.MazeObjKinds.EStart)
                 {
-                    startObject.transform.position = new Vector3(0 * PosOffset - 4.5f, 0, (row + 1) * PosOffset - 0.35f) + rootPos;
-                    startObject.transform.Rotate(new Vector3(0, 0, 0));
-                    MoveCenterPosition(startObject);
+                    Vector3 startPos = new Vector3(
+                        0 * stageConst.PosOffset - stageConst.StartGimicOfsetHeight,
+                        0,
+                        (row + 1) * stageConst.PosOffset - stageConst.StartGimicOfsetVertcal
+                    );
+                    SetupGimicTransform(startObject, startPos, 0f);
                     break;
                 }
             }
-            int index = 0;
+
+            int cpIndex = 0;
+            int mazeRate = maze.GetRate();
+
             for (int column = 0; column < Size - 1; column++)
             {
-                if (mazeData[column, 0] == MazeObjKinds.EChecPoint)
+                if (cpIndex >= checkPoints.Length) break;
+
+                if (mazeData[column, 0] == MazeConstants.MazeObjKinds.EChecPoint)
                 {
-                    checkPoints[index].transform.position = new Vector3((column + 1) * PosOffset + 0.35f , 0, 0 * PosOffset - 4.5f) + rootPos;
-                    checkPoints[index].transform.Rotate(new Vector3(0, 270, 0));
-                    MoveCenterPosition(checkPoints[index]);
-                    index++;
-                    column += maze.GetRate();
-                }
-                if (index == checkPoints.Length)
-                {
-                    break;
+                    Vector3 cpPos = new Vector3(
+                        (column + 1) * stageConst.PosOffset + stageConst.CheckpointGimicOfsetHeight,
+                        0,
+                        0 * stageConst.PosOffset - stageConst.CheckpointGimicOfsetVertcal
+                    );
+                    SetupGimicTransform(checkPoints[cpIndex], cpPos, 270f);
+
+                    cpIndex++;
+                    column += mazeRate;
                 }
             }
+
+            // üö© Â••„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Éù„Ç§„É≥„Éà (Z = Size - 1 „ÅÆ„É©„Ç§„É≥)
             for (int column = 0; column < Size - 1; column++)
             {
-                if (mazeData[column, Size - 1] == MazeObjKinds.EChecPoint)
+                if (cpIndex >= checkPoints.Length) break;
+
+                if (mazeData[column, Size - 1] == MazeConstants.MazeObjKinds.EChecPoint)
                 {
-                    checkPoints[index].transform.position = new Vector3((column + 1) * PosOffset - 0.35f, 0, (Size - 1) * PosOffset + 4.5f) + rootPos;
-                    checkPoints[index].transform.Rotate(new Vector3(0, 90, 0));
-                    MoveCenterPosition(checkPoints[index]);
-                    index++;
-                    column += maze.GetRate();
+                    Vector3 cpPos = new Vector3(
+                        (column + 1) * stageConst.PosOffset - stageConst.CheckpointGimicOfsetHeight,
+                        0,
+                        (Size - 1) * stageConst.PosOffset + stageConst.CheckpointGimicOfsetVertcal
+                    );
+                    SetupGimicTransform(checkPoints[cpIndex], cpPos, 90f);
+
+                    cpIndex++;
+                    column += mazeRate;
                 }
-                if (index == checkPoints.Length)
-                {
-                    break;
-                }
+            }
+
+            void SetupGimicTransform(GameObject obj, Vector3 localPos, float yRotation)
+            {
+                if (obj == null) return;
+                obj.transform.position = localPos + rootPos;
+                obj.transform.rotation = Quaternion.Euler(0f, yRotation, 0f);
+                MoveCenterPosition(obj);
             }
         }
-
         private void MoveCenterPosition(GameObject target)
         {
             if (target == null) return;
@@ -345,8 +316,6 @@ namespace MazeGame
             Vector3 bottomCenter = new Vector3(renderer.bounds.center.x, renderer.bounds.min.y, renderer.bounds.center.z);
             Vector3 offset = currentPivot - bottomCenter;
             target.transform.position += offset;
-            // ÉãÅ[ÉgäÓèÄÇ…à⁄ìÆ
-            //target.transform.position += rootPos;
 
         }
 

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using Newtonsoft.Json.Bson;
 
 namespace MazeGame
 {
@@ -18,27 +19,25 @@ namespace MazeGame
         [SerializeField] private Image newItemImage;
         [SerializeField] private Text newItemName;
 
-        [SerializeField] private ItemInventory itemInventory;
-
         [Header("設定")]
         [SerializeField] private float duration = 0.3f;
         [SerializeField] private float slideOffset = 100f; // スライド距離
 
-        private void Start()
+        public void Init()
         {
-            itemInventory.OnChangeItem += UpdateItem;
-            itemInventory.OnInitItem += InitItem;
-            // 初期状態ではNew側を隠しておく
+        }
+
+        public void Begin()
+        {
             newGroup.alpha = 0;
+
         }
 
-        private void OnDestroy()
+        public void Destroy()
         {
-            itemInventory.OnChangeItem -= UpdateItem;
-            itemInventory.OnInitItem -= InitItem;
         }
 
-        private void InitItem(ItemBase itemBase)
+        public void InitItem(ItemBase itemBase)
         {
             //　新しい方は消えておく
             newGroup.alpha = 0;
@@ -50,7 +49,7 @@ namespace MazeGame
 
         }
 
-        private void UpdateItem(ItemBase itemBase)
+        public void UpdateItem(ItemBase itemBase)
         {
             // すべてのアニメーションを即座に完了させて重複を防ぐ
             currentRect.DOKill();

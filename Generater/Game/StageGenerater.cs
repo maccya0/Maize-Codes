@@ -1,8 +1,6 @@
 using System;
 using Unity.AI.Navigation;
 using UnityEngine;
-using static MazeGame.MazeGameConstants.MazeConstants;
-using static MazeGame.MazeGameConstants;
 using System.Collections.Generic;
 
 namespace MazeGame
@@ -14,6 +12,10 @@ namespace MazeGame
         [SerializeField] GoalController GoalController;
         [SerializeField] StartController StartController;
         [SerializeField][Range(0, 255)] private uint enemyRange = 192;
+        [SerializeField] ItemBox ItemBox;
+        [SerializeField] ItemInventory itemInventory;
+
+
         private LevelSelection LevelSelection;
         public StageGenerater(LevelSelection levelSelection)
         {
@@ -30,6 +32,7 @@ namespace MazeGame
             }
             StageCreate.Init(StartController.gameObject,GoalController.gameObject, checkPoints.ToArray());
             EnemyManager.Instance.ManagerInit();
+            ItemBox.Init(itemInventory,InputManager.Instance.GetInputAction());
         }
 
         public override void Generated()
@@ -49,6 +52,7 @@ namespace MazeGame
             StageCreate.Begin();
             EnemyManager.Instance.ManagerStart();
             EnemyManager.Instance.GenerateEnemys(enemyRange, mazeData.EnemyNum, (int)LevelSelection.GetLevel());
+            ItemBox.Begin();
         }
 
         public override void Tick()

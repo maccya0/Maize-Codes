@@ -19,7 +19,7 @@ namespace MazeGame
         private void AddSkill()
         {
             base.OutputMessage("ƒXƒLƒ‹‰ñ”‚ª‘‚¦‚½");
-            int Index = UnityEngine.Random.Range(0, actionList.Count);
+            int Index = UnityEngine.Random.Range(1, actionList.Count);
             byte num = (byte)UnityEngine.Random.Range(1, ChargeNum);
             actionList[Index].UseCharge(num);
         }

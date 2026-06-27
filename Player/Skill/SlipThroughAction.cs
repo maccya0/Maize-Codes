@@ -2,8 +2,6 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using static MazeGame.MazeGameConstants;
-using static MazeGame.MazeGameConstants.MazeConstants;
 
 namespace MazeGame
 {
@@ -84,10 +82,10 @@ namespace MazeGame
             maze.GetObjectPos(target.gameObject, ref column, ref row);
             
             // 前後が壁かどうか判定
-            bool beforePos = (maze.GetStageinfo(column - 1, row) == MazeObjKinds.EBreakWall) || (maze.GetStageinfo(column - 1, row) == MazeObjKinds.EBreakWall);
-            bool afterPos = (maze.GetStageinfo(column + 1, row) == MazeObjKinds.EBreakWall) || (maze.GetStageinfo(column + 1, row) == MazeObjKinds.EBreakWall);
-            bool rightPos = (maze.GetStageinfo(column, row - 1) == MazeObjKinds.EBreakWall) || (maze.GetStageinfo(column, row - 1) == MazeObjKinds.EBreakWall);
-            bool leftPos = (maze.GetStageinfo(column, row + 1) == MazeObjKinds.EBreakWall) || (maze.GetStageinfo(column, row + 1) == MazeObjKinds.EBreakWall);
+            bool beforePos = (maze.GetStageinfo(column - 1, row) == MazeConstants.MazeObjKinds.EBreakWall) || (maze.GetStageinfo(column - 1, row) == MazeConstants.MazeObjKinds.EBreakWall);
+            bool afterPos = (maze.GetStageinfo(column + 1, row) == MazeConstants.MazeObjKinds.EBreakWall) || (maze.GetStageinfo(column + 1, row) == MazeConstants.MazeObjKinds.EBreakWall);
+            bool rightPos = (maze.GetStageinfo(column, row - 1) == MazeConstants.MazeObjKinds.EBreakWall) || (maze.GetStageinfo(column, row - 1) == MazeConstants.MazeObjKinds.EBreakWall);
+            bool leftPos = (maze.GetStageinfo(column, row + 1) == MazeConstants.MazeObjKinds.EBreakWall) || (maze.GetStageinfo(column, row + 1) == MazeConstants.MazeObjKinds.EBreakWall);
             if (beforePos && afterPos)
             {
                 // 前後にいる
@@ -111,8 +109,8 @@ namespace MazeGame
         private void SetWarpPoint(Vector3 frontParticlePos, Vector3 backParticlePos ,float yawAngle)
         {
             // パーティクルが必ず正面になるように調整して配置
-            frontParticlePos.y = PlayerConstants.Height;
-            backParticlePos.y = PlayerConstants.Height;
+            frontParticlePos.y = MazeGameConstants.PlayerConstants.Height;
+            backParticlePos.y = MazeGameConstants.PlayerConstants.Height;
 
             particleObject = Instantiate(skillData.particle, frontParticlePos, Quaternion.identity);
             particleObject.transform.Rotate(new Vector3(0, yawAngle, 0), Space.World);

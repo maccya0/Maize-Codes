@@ -6,15 +6,19 @@ namespace MazeGame
 {
     public abstract class Statue : MonoBehaviour
     {
+        [Header("Statue Settings")]
         [SerializeField] protected float RoundSpeed;  //回転速度
         [SerializeField] protected float SearchRnage; //サーチ範囲
         private bool isRecast;
         [SerializeField] private float RecastTime = 3f;
         [SerializeField] private SoundData findSound;
+        [Header("Debug Settings")]
+        [SerializeField] private float rayDuration = 0.1f;
+
 
         protected virtual void Awake()
         {
-
+            // Y軸で初期回転を360°の中から選択する
             this.gameObject.transform.Rotate(new Vector3(0, UnityEngine.Random.Range(0, 359), 0));
             isRecast = false;
         }
@@ -50,7 +54,7 @@ namespace MazeGame
             int layerMask = LayerMask.GetMask("Player", "Obstacle");
             if (Physics.Raycast(ray, out hit, SearchRnage, layerMask))
             {
-                Debug.DrawRay(ray.origin, ray.direction * hit.distance, Color.green, 0.1f);
+                Debug.DrawRay(ray.origin, ray.direction * hit.distance, Color.green, rayDuration);
 
                 if (hit.collider.tag == PlayerConstants.Tag)
                 {

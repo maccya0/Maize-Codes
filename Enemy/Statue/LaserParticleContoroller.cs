@@ -4,6 +4,7 @@ using MazeGame;
 public class LaserParticleContoroller : MonoBehaviour
 {
     [SerializeField] private short Damage = 200; //ダメージ
+    [SerializeField] private float Impact = 10.0f;
     private bool isHit = false;
 
     void OnParticleCollision(GameObject other)
@@ -16,7 +17,7 @@ public class LaserParticleContoroller : MonoBehaviour
         PlayerController controller = other.GetComponent<PlayerController>();
         Rigidbody body = other.GetComponent<Rigidbody>();
         Vector3 direct = -other.transform.forward;
-        body.AddForce(direct*10, ForceMode.Impulse);
+        body.AddForce(direct* Impact, ForceMode.Impulse);
         controller.AddDamage(Damage);
         //ヒットエフェクトや効果音の設定
     }

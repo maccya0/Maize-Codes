@@ -15,6 +15,7 @@ namespace MazeGame
         private int timeEventTotal;
         private float elapsedTime;
         private bool isRunning;
+        private int BoolRange = 2;
 
         public void Init()
         {
@@ -65,7 +66,7 @@ namespace MazeGame
             {
                 if (elapsedTime <= EventInterval) return;
                 elapsedTime = 0;
-                bool target = UnityEngine.Random.Range(0, 2) == 1 ? true : false;
+                bool target = UnityEngine.Random.Range(0, BoolRange) == 1 ? true : false;
                 MazeEvent mazeEvent = null;
                 if (target)
                 {

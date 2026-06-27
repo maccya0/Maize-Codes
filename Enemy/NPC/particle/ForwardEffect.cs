@@ -17,7 +17,7 @@ namespace MazeGame
 
         void OnParticleCollision(GameObject other)
         {
-            if (!other.gameObject.CompareTag(PlayerConstants.Tag)) return;
+            if (!other.gameObject.CompareTag(MazeGameConstants.PlayerConstants.Tag)) return;
             if (isHit) return;
             isHit = true;
             other.gameObject.GetComponent<PlayerController>().AddDamage(Damage, false);

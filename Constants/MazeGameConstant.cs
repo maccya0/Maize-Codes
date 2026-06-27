@@ -1,75 +1,29 @@
+ï»¿using UnityEngine;
 
 namespace MazeGame
 {
-    public static class MazeGameConstants
+    public class MazeGameConstants : MonoBehaviour
     {
-        public static class PlayerConstants
+        [Header("-------------- ã‚¤ãƒ³ã‚¹ãƒšã‚¯ã‚¿ãƒ¼ã§è¨­å®šã™ã‚‹ç”¨ --------------")]
+        [SerializeField] private PlayerConstants _playerConstants;
+        [SerializeField] private EnemyConstants _enemyConstants;
+        [SerializeField] private InputConstants _inputConstants;
+        [SerializeField] private GameConstant _gameConstant;
+        [SerializeField] private MazeConstants _mazeConstants;
+
+        public static PlayerConstants PlayerConstants;
+        public static EnemyConstants EnemyConstants;
+        public static InputConstants InputConstants;
+        public static GameConstant GameConstant;
+        public static MazeConstants MazeConstants;
+
+        public void Init()
         {
-            public const float Height = 1.0f + MazeConstants.rootY;
-            public const string Tag = "Player";
-            public const string Layer = "Player";
+            PlayerConstants = _playerConstants;
+            EnemyConstants = _enemyConstants;
+            InputConstants = _inputConstants;
+            GameConstant = _gameConstant;
+            MazeConstants = _mazeConstants;
         }
-        public static class EnemyConstants
-        {
-            public const float Height = 0.5f + MazeConstants.rootY;
-            public const string Tag = "Enemy";
-        }
-        public static class InputConstants
-        {
-            public const float deadInputVal = 0.4f;
-        }
-
-        public static class GameConstant
-        {
-            public const float lightMinVal = 0.3f;
-            public const float lightMaxVal = 1.0f;
-
-        }
-
-        public static class MazeConstants
-        {
-            // ”wŒi‚Æ‚ÌˆÊ’u’²®—p
-            public const float rootX = 450f;
-            public const float rootY = 76f;
-            public const float rootZ = 220f;
-            public const string wallTag = "Wall";
-            public const string indestructibleWallTag = "Indestructible";
-            public enum JudgeState
-            {
-                None,
-                Win,
-                Lose,
-            }
-            public const float AngRange = 0.2f;
-            public const float ObjHeight = 1.0f;
-            public const float PosOffset = 1.0f;
-            public const float StageHeightLimit = PosOffset + 5.0f;
-
-            public enum MazeObjKinds
-            {
-                EPath,  //’Ê˜H
-                ETrapPath,  //ã©‚Ì’Ê˜H
-                EUnBreakWall,   //”j‰ó•s‰Â‚Ì•Ç
-                EBreakWall, //”j‰ó‰Â”\‚Ì•Ç
-                ETrapWall,  //ã©‚Ì•Ç
-                EEnemyPos,  //ƒGƒlƒ~[İ’uŒÂŠ
-                EStart, //ƒXƒ^[ƒgˆÊ’u
-                EChecPoint, //ƒ`ƒFƒbƒNƒ|ƒCƒ“ƒgˆÊ’u
-                EGoal,   //ƒS[ƒ‹ˆÊ’u
-                EItem   //ƒAƒCƒeƒ€ˆÊ’u
-            }
-            public enum Direct
-            {
-                North,
-                East,
-                South,
-                West,
-                Nothing,
-                Siege
-            };
-
-        }
-
     }
-
 }

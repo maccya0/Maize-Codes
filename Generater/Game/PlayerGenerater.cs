@@ -1,8 +1,7 @@
+using Cysharp.Threading.Tasks.Triggers;
 using System;
 using Unity.AI.Navigation;
 using UnityEngine;
-using static MazeGame.MazeGameConstants.MazeConstants;
-using static MazeGame.MazeGameConstants;
 
 namespace MazeGame
 {
@@ -11,6 +10,8 @@ namespace MazeGame
         [SerializeField] PlayerController Player;
         [SerializeField] GameObject Start;
         [SerializeField] TargetController Target;
+        [SerializeField] ItemInventory ItemInventory;
+        [SerializeField] CameraContollor CameraContollor;
         public PlayerGenerater()
         {
         }
@@ -21,6 +22,8 @@ namespace MazeGame
             Player.IsPlayerControll = false;
             Player.Init(InputManager.Instance.GetInputAction(),Start);
             Target.Init();
+            ItemInventory.Init(Player);
+            CameraContollor.Init(InputManager.Instance.GetInputAction());
         }
 
         public override void Generated()
@@ -28,6 +31,7 @@ namespace MazeGame
             base.Generated();
             Player.Begin();
             Target.Begin();
+            ItemInventory.Begin();
             Player.IsPlayerControll = true;
             InputManager.Instance.ChangeInputModeUIToPlayer();
         }
@@ -37,13 +41,15 @@ namespace MazeGame
             base.Tick();
             Player.Tick();
             Target.Tick();
+            CameraContollor?.Tick();
         }
 
         public override void Destroy()
         {
             base.Destroy();
-            Player.Destroy();
             Target.Destroy();
+            CameraContollor.Destroy();
+            Player.Destroy();
         }
 
     }

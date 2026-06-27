@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using static MazeGame.MazeGameConstants.MazeConstants;
 
 namespace MazeGame
 {
@@ -12,7 +11,7 @@ namespace MazeGame
             Rate
         };
         private MazeExtends maze;
-        private MazeObjKinds[,] mazeData;
+        private MazeConstants.MazeObjKinds[,] mazeData;
         private int rate;
         public GameObject[,] stageObjects { get; set; }
 
@@ -38,7 +37,7 @@ namespace MazeGame
         }
 
         //ñ¿òHèÓïÒéÊìæ
-        public MazeObjKinds[,] GetMazeData()
+        public MazeConstants.MazeObjKinds[,] GetMazeData()
         {
             return maze.GetMazeData();
         }
@@ -64,32 +63,32 @@ namespace MazeGame
             return stageObjects[column, row].transform.position;
         }
 
-        public MazeObjKinds GetStageinfo(int column, int row)
+        public MazeConstants.MazeObjKinds GetStageinfo(int column, int row)
         {
             return mazeData[column, row];
         }
 
 
-        private bool CheckWall(Direct direct, int column, int row ,int checkAround)
+        private bool CheckWall(MazeConstants.Direct direct, int column, int row ,int checkAround)
         {
             int x = 0;
             int y = 0;
             int loopCnt = 0;
             switch (direct)
             {
-                case Direct.North:
+                case MazeConstants.Direct.North:
                     x = 0;
                     y = 1;
                     break;
-                case Direct.South:
+                case MazeConstants.Direct.South:
                     x = 0;
                     y = -1;
                     break;
-                case Direct.West:
+                case MazeConstants.Direct.West:
                     x = -1;
                     y = 0;
                     break;
-                case Direct.East:
+                case MazeConstants.Direct.East:
                     x = 1;
                     y = 0;
                     break;
@@ -117,9 +116,9 @@ namespace MazeGame
         {
             if (column < 0 || GetStageSize() <= column) return false;
             if (row < 0 || GetStageSize() <= row) return false;
-            bool breakWall = mazeData[column, row] == MazeObjKinds.EBreakWall;
-            bool trapWall = mazeData[column, row] == MazeObjKinds.ETrapWall;
-            bool unbreakWall = mazeData[column, row] == MazeObjKinds.EUnBreakWall;
+            bool breakWall = mazeData[column, row] == MazeConstants.MazeObjKinds.EBreakWall;
+            bool trapWall = mazeData[column, row] == MazeConstants.MazeObjKinds.ETrapWall;
+            bool unbreakWall = mazeData[column, row] == MazeConstants.MazeObjKinds.EUnBreakWall;
 
             if(breakWall || trapWall || unbreakWall)
             {
@@ -142,17 +141,17 @@ namespace MazeGame
             bool frontFlag;
             if (size == CheckSize.Around)
             {
-                rightFlag = CheckWall(Direct.East, column, row, 1);
-                leftFlag = CheckWall(Direct.West, column, row, 1);
-                backFlag = CheckWall(Direct.South, column, row, 1);
-                frontFlag = CheckWall(Direct.North, column, row, 1);
+                rightFlag = CheckWall(MazeConstants.Direct.East, column, row, 1);
+                leftFlag = CheckWall(MazeConstants.Direct.West, column, row, 1);
+                backFlag = CheckWall(MazeConstants.Direct.South, column, row, 1);
+                frontFlag = CheckWall(MazeConstants.Direct.North, column, row, 1);
             }
             else
             {
-                rightFlag = CheckWall(Direct.East, column, row, rate);
-                leftFlag = CheckWall(Direct.West, column, row, rate);
-                backFlag = CheckWall(Direct.South, column, row, rate);
-                frontFlag = CheckWall(Direct.North, column, row, rate);
+                rightFlag = CheckWall(MazeConstants.Direct.East, column, row, rate);
+                leftFlag = CheckWall(MazeConstants.Direct.West, column, row, rate);
+                backFlag = CheckWall(MazeConstants.Direct.South, column, row, rate);
+                frontFlag = CheckWall(MazeConstants.Direct.North, column, row, rate);
             }
             if ((backFlag && !frontFlag && rightFlag && !leftFlag) || // Ñ£
                 (backFlag && !frontFlag && !rightFlag && leftFlag) || // Ñ§
@@ -177,17 +176,17 @@ namespace MazeGame
             bool frontFlag;
             if (size == CheckSize.Around)
             {
-                rightFlag = CheckWall(Direct.East, column, row, 1);
-                leftFlag = CheckWall(Direct.West, column, row, 1);
-                backFlag = CheckWall(Direct.South, column, row, 1);
-                frontFlag = CheckWall(Direct.North, column, row, 1);
+                rightFlag = CheckWall(MazeConstants.Direct.East, column, row, 1);
+                leftFlag = CheckWall(MazeConstants.Direct.West, column, row, 1);
+                backFlag = CheckWall(MazeConstants.Direct.South, column, row, 1);
+                frontFlag = CheckWall(MazeConstants.Direct.North, column, row, 1);
             }
             else
             {
-                rightFlag = CheckWall(Direct.East, column, row, rate);
-                leftFlag = CheckWall(Direct.West, column, row, rate);
-                backFlag = CheckWall(Direct.South, column, row, rate);
-                frontFlag = CheckWall(Direct.North, column, row, rate);
+                rightFlag = CheckWall(MazeConstants.Direct.East, column, row, rate);
+                leftFlag = CheckWall(MazeConstants.Direct.West, column, row, rate);
+                backFlag = CheckWall(MazeConstants.Direct.South, column, row, rate);
+                frontFlag = CheckWall(MazeConstants.Direct.North, column, row, rate);
             }
             if ((!backFlag && frontFlag && rightFlag && leftFlag) || // Ñ®
                 (backFlag && !frontFlag && rightFlag && leftFlag) || // Ñ±
@@ -211,17 +210,17 @@ namespace MazeGame
             bool frontFlag;
             if (size == CheckSize.Around)
             {
-                rightFlag = CheckWall(Direct.East, column, row, 1);
-                leftFlag = CheckWall(Direct.West, column, row, 1);
-                backFlag = CheckWall(Direct.South, column, row, 1);
-                frontFlag = CheckWall(Direct.North, column, row, 1);
+                rightFlag = CheckWall(MazeConstants.Direct.East, column, row, 1);
+                leftFlag = CheckWall(MazeConstants.Direct.West, column, row, 1);
+                backFlag = CheckWall(MazeConstants.Direct.South, column, row, 1);
+                frontFlag = CheckWall(MazeConstants.Direct.North, column, row, 1);
             }
             else
             {
-                rightFlag = CheckWall(Direct.East, column, row, rate);
-                leftFlag = CheckWall(Direct.West, column, row, rate);
-                backFlag = CheckWall(Direct.South, column, row, rate);
-                frontFlag = CheckWall(Direct.North, column, row, rate);
+                rightFlag = CheckWall(MazeConstants.Direct.East, column, row, rate);
+                leftFlag = CheckWall(MazeConstants.Direct.West, column, row, rate);
+                backFlag = CheckWall(MazeConstants.Direct.South, column, row, rate);
+                frontFlag = CheckWall(MazeConstants.Direct.North, column, row, rate);
             }
             if ((backFlag && frontFlag && rightFlag && !leftFlag) || // ç∂çsÇ´é~Ç‹ÇË
                 (backFlag && frontFlag && !rightFlag && leftFlag) || // âEçsÇ´é~Ç‹ÇË
@@ -245,17 +244,17 @@ namespace MazeGame
             bool frontFlag;
             if (size == CheckSize.Around)
             {
-                rightFlag = CheckWall(Direct.East, column, row, 1);
-                leftFlag = CheckWall(Direct.West, column, row, 1);
-                backFlag = CheckWall(Direct.South, column, row, 1);
-                frontFlag = CheckWall(Direct.North, column, row, 1);
+                rightFlag = CheckWall(MazeConstants.Direct.East, column, row, 1);
+                leftFlag = CheckWall(MazeConstants.Direct.West, column, row, 1);
+                backFlag = CheckWall(MazeConstants.Direct.South, column, row, 1);
+                frontFlag = CheckWall(MazeConstants.Direct.North, column, row, 1);
             }
             else
             {
-                rightFlag = CheckWall(Direct.East, column, row, rate);
-                leftFlag = CheckWall(Direct.West, column, row, rate);
-                backFlag = CheckWall(Direct.South, column, row, rate);
-                frontFlag = CheckWall(Direct.North, column, row, rate);
+                rightFlag = CheckWall(MazeConstants.Direct.East, column, row, rate);
+                leftFlag = CheckWall(MazeConstants.Direct.West, column, row, rate);
+                backFlag = CheckWall(MazeConstants.Direct.South, column, row, rate);
+                frontFlag = CheckWall(MazeConstants.Direct.North, column, row, rate);
             }
 
             if (rightFlag && leftFlag && backFlag && frontFlag)
@@ -268,44 +267,44 @@ namespace MazeGame
             }
         }
 
-        public Direct JudeAround(int column, int row)
+        public MazeConstants.Direct JudeAround(int column, int row)
         {
-            bool rightFlag = CheckWall(Direct.East, column, row, 1);
-            bool leftFlag = CheckWall(Direct.West, column, row, 1);
-            bool backFlag = CheckWall(Direct.South, column, row, 1);
-            bool frontFlag = CheckWall(Direct.North, column, row, 1);
+            bool rightFlag = CheckWall(MazeConstants.Direct.East, column, row, 1);
+            bool leftFlag = CheckWall(MazeConstants.Direct.West, column, row, 1);
+            bool backFlag = CheckWall(MazeConstants.Direct.South, column, row, 1);
+            bool frontFlag = CheckWall(MazeConstants.Direct.North, column, row, 1);
             if(rightFlag && leftFlag && backFlag && frontFlag)
             {
-                return Direct.Siege;
+                return MazeConstants.Direct.Siege;
             }
             else if (!rightFlag && !leftFlag && !backFlag && !frontFlag)
             {
-                return Direct.Nothing;
+                return MazeConstants.Direct.Nothing;
             }
             else if (!frontFlag)
             {
-                return Direct.North;
+                return MazeConstants.Direct.North;
             }
             else if (!backFlag)
             {
-                return Direct.South;
+                return MazeConstants.Direct.South;
             }
             else if (!rightFlag )
             {
-                return Direct.West;
+                return MazeConstants.Direct.West;
             }
             else if (!leftFlag)
             {
-                return Direct.East;
+                return MazeConstants.Direct.East;
             }
             else
             {
-                return Direct.Nothing;
+                return MazeConstants.Direct.Nothing;
             }
         }
 
         // ï˚å¸îªíË
-        public Direct JudgeDirect(int column, int row, CheckSize size)
+        public MazeConstants.Direct JudgeDirect(int column, int row, CheckSize size)
         {
             bool rightFlag;
             bool leftFlag;
@@ -313,38 +312,38 @@ namespace MazeGame
             bool frontFlag;
             if (size == CheckSize.Around)
             {
-                rightFlag = CheckWall(Direct.East, column, row, 1);
-                leftFlag = CheckWall(Direct.West, column, row, 1);
-                backFlag = CheckWall(Direct.South, column, row, 1);
-                frontFlag = CheckWall(Direct.North, column, row, 1);
+                rightFlag = CheckWall(MazeConstants.Direct.East, column, row, 1);
+                leftFlag = CheckWall(MazeConstants.Direct.West, column, row, 1);
+                backFlag = CheckWall(MazeConstants.Direct.South, column, row, 1);
+                frontFlag = CheckWall(MazeConstants.Direct.North, column, row, 1);
             }
             else
             {
-                rightFlag = CheckWall(Direct.East, column, row, rate);
-                leftFlag = CheckWall(Direct.West, column, row, rate);
-                backFlag = CheckWall(Direct.South, column, row, rate);
-                frontFlag = CheckWall(Direct.North, column, row, rate);
+                rightFlag = CheckWall(MazeConstants.Direct.East, column, row, rate);
+                leftFlag = CheckWall(MazeConstants.Direct.West, column, row, rate);
+                backFlag = CheckWall(MazeConstants.Direct.South, column, row, rate);
+                frontFlag = CheckWall(MazeConstants.Direct.North, column, row, rate);
             }
             if (!backFlag)
             {
-                return Direct.South;
+                return MazeConstants.Direct.South;
             }
             else if (!frontFlag)
             {
-                return Direct.North;
+                return MazeConstants.Direct.North;
             }
             else if (!rightFlag)
             {
-                return Direct.East;
+                return MazeConstants.Direct.East;
             }
             else if (!leftFlag)
             {
-                return Direct.West;
+                return MazeConstants.Direct.West;
             }
             else
             {
                 //äÓñ{ìIÇ…Ç±Ç±Ç…ÇÕìûíBÇµÇ»Ç¢ÇÃÇ≈NothingÇï‘Ç∑
-                return Direct.Nothing;
+                return MazeConstants.Direct.Nothing;
             }
 
         }

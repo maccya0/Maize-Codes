@@ -10,6 +10,7 @@ public partial class FindAObstacleCondition : Condition
     [SerializeReference] public BlackboardVariable<GameObject> Self;
     [SerializeReference] public BlackboardVariable<List<string>> ObstacleTag;
     private float searchRange = 3.0f;
+    private float rayDuration = 0.1f;
 
     public override bool IsTrue()
     {
@@ -20,7 +21,7 @@ public partial class FindAObstacleCondition : Condition
         Vector3 rayPos = Self.Value.transform.position;
         Ray ray = new Ray(rayPos, Self.Value.transform.forward);
         RaycastHit hit;
-        Debug.DrawRay(ray.origin, ray.direction * searchRange, Color.cyan, 0, false);
+        Debug.DrawRay(ray.origin, ray.direction * searchRange, Color.cyan, rayDuration, false);
         if (Physics.Raycast(ray, out hit, searchRange))
         {
             foreach (String tag in ObstacleTag.Value)

@@ -1,8 +1,6 @@
 using System;
 using Unity.AI.Navigation;
 using UnityEngine;
-using static MazeGame.MazeGameConstants.MazeConstants;
-using static MazeGame.MazeGameConstants;
 
 public abstract class BaseGenerator : MonoBehaviour
 {

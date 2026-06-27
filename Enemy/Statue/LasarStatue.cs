@@ -9,7 +9,7 @@ public class LasarStatue : Statue
     protected override void ExecuteStatueSkill(GameObject gameObject)
     {
         Vector3 pos = transform.position + transform.forward;
-        pos.y = PlayerConstants.Height;
+        pos.y = MazeGameConstants.PlayerConstants.Height;
         GameObject runObject = Instantiate(lasarPrefab, pos, Quaternion.identity);
         runObject.transform.LookAt(gameObject.transform);
         LaserContoroller temp = runObject.GetComponent<LaserContoroller>();

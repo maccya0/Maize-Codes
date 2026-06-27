@@ -1,170 +1,168 @@
-using System.Collections.Generic;
-using static MazeGame.MazeGameConstants.MazeConstants;
+ï»¿using System.Collections.Generic;
+using UnityEngine;
 
 namespace MazeGame
 {
     public class DiggingHoleMaze
     {
-        protected enum Direction // •ûŠp
-        {
-            EUp,
-            ERight,
-            EDown,
-            ELeft
-        }
-        protected struct Cell // À•W
+        protected enum Direction { EUp, ERight, EDown, ELeft }
+        protected struct Cell
         {
             public int X { get; set; }
             public int Y { get; set; }
-            public Cell(int x, int y)
-            {
-                this.X = x;
-                this.Y = y;
-            }
+            public Cell(int x, int y) { this.X = x; this.Y = y; }
         }
 
-        protected int size;   // ƒXƒe[ƒW‚Ì¶¬Œ³ƒTƒCƒY
-        protected System.Random random;   // —”
-        private MazeObjKinds[,] maze;   // –À˜H
-        private Stack<Cell> CurrentWallCells;  // Šg’£’†‚Ì•Çî•ñ
-        private List<Cell> StartCells;  // ŠJnƒZƒ‹‚Ìî•ñ
+        protected int size;
+        protected System.Random random;
+        private MazeConstants.MazeObjKinds[,] maze;
+        private Stack<Cell> currentWallCells;
+        private List<Cell> startCells;
 
-        // –À˜H¶¬ƒf[ƒ^ƒZƒbƒg
+        private bool[,] isCurrentWallMap;
+
+        private readonly Direction[] directionPool = new Direction[4];
+
         public virtual void SetMazeData(int _size)
         {
-            // Šï”‚Å‚È‚¢‚Æ¶¬‚Å‚«‚È‚¢‚Ì‚Å’²®
-            if (_size % 2 == 0)
-            {
-                _size++;
-            }
-            // ƒXƒe[ƒWƒTƒCƒY‚Í‚»‚ÌŒã‚ÉCreateMaze‚·‚é‘O’ñ
+            if (_size % 2 == 0) _size++;
             this.size = _size;
-            this.maze = new MazeObjKinds[this.size, this.size];
-            this.StartCells = new List<Cell>();
-            this.CurrentWallCells = new Stack<Cell>();
+            this.maze = new MazeConstants.MazeObjKinds[this.size, this.size];
+            this.isCurrentWallMap = new bool[this.size, this.size];
+            this.startCells = new List<Cell>();
+            this.currentWallCells = new Stack<Cell>();
             this.random = new System.Random();
         }
-        protected MazeObjKinds[,] CreateMaze()
+
+        protected MazeConstants.MazeObjKinds[,] CreateMaze()
         {
-            //  Šeƒ}ƒX‚Ì‰Šúİ’è‚ğs‚¤
             for (int y = 0; y < this.size; y++)
             {
                 for (int x = 0; x < this.size; x++)
                 {
                     if (x == 0 || y == 0 || x == this.size - 1 || y == this.size - 1)
                     {
-                        //  ŠOü‚Í”j‰ó•s‰Â‚Ì•Ç‚É‚·‚é
-                        this.maze[x, y] = MazeObjKinds.EUnBreakWall;
+                        this.maze[x, y] = MazeConstants.MazeObjKinds.EUnBreakWall;
                     }
                     else
                     {
-                        // ˆê“x‘S•”’Êí‚Ì’Ê˜H‚Éİ’è‚·‚é
-                        this.maze[x, y] = MazeObjKinds.EPath;
-                        //  ŠOü‚Å‚Í‚È‚¢‹ô”À•W‚ğ•ÇL‚Î‚µŠJn“_‚É‚µ‚Ä‚¨‚­
+                        this.maze[x, y] = MazeConstants.MazeObjKinds.EPath;
                         if (x % 2 == 0 && y % 2 == 0)
                         {
-                            //  ŠJnŒó•âÀ•W
-                            StartCells.Add(new Cell(x, y));
+                            startCells.Add(new Cell(x, y));
                         }
                     }
                 }
             }
-            //  •Ç‚ªŠg’£‚Å‚«‚È‚­‚È‚é‚Ü‚Åƒ‹[ƒv
-            while (StartCells.Count > 0)
+
+            while (startCells.Count > 0)
             {
-                //  ƒ‰ƒ“ƒ_ƒ€‚ÉŠJnƒZƒ‹‚ğæ“¾‚µAŠJnŒó•â‚©‚çíœ
-                int index = random.Next(StartCells.Count);
-                Cell cell = StartCells[index];
-                StartCells.RemoveAt(index);
+                int index = random.Next(startCells.Count);
+                Cell cell = startCells[index];
+                startCells.RemoveAt(index);
+
                 int x = cell.X;
                 int y = cell.Y;
 
-                //  ‚·‚Å‚É•Ç‚Ìê‡‚Í‰½‚à‚µ‚È‚¢
-                if (this.maze[x, y] == MazeObjKinds.EPath)
+                if (this.maze[x, y] == MazeConstants.MazeObjKinds.EPath)
                 {
-                    //  Šg’£’†‚Ì•Çî•ñ‚ğ‰Šú‰»
-                    CurrentWallCells.Clear();
-                    ExtendWall(x, y);
+                    currentWallCells.Clear();
+                    System.Array.Clear(isCurrentWallMap, 0, isCurrentWallMap.Length);
+
+                    ExecuteExtendWallLoop(x, y);
                 }
             }
             return this.maze;
         }
 
-        //  w’èÀ•W‚©‚ç•Ç‚ğ¶¬Šg’£‚·‚é
-        private void ExtendWall(int x, int y)
+        private void ExecuteExtendWallLoop(int startX, int startY)
         {
-            //  L‚Î‚·‚±‚Æ‚ª‚Å‚«‚é•ûŒü(1ƒ}ƒXæ‚ª’Ê˜H‚Å2ƒ}ƒXæ‚Ü‚Å”ÍˆÍ“à)
-            //  2ƒ}ƒXæ‚ª•Ç‚Å©•ª©g‚Ìê‡AL‚Î‚¹‚È‚¢
-            var directions = new List<Direction>();
-            if (this.maze[x, y - 1] == MazeObjKinds.EPath && !IsCurrentWall(x, y - 2))
-                directions.Add(Direction.EUp);
-            if (this.maze[x + 1, y] == MazeObjKinds.EPath && !IsCurrentWall(x + 2, y))
-                directions.Add(Direction.ERight);
-            if (this.maze[x, y + 1] == MazeObjKinds.EPath && !IsCurrentWall(x, y + 2))
-                directions.Add(Direction.EDown);
-            if (this.maze[x - 1, y] == MazeObjKinds.EPath && !IsCurrentWall(x - 2, y))
-                directions.Add(Direction.ELeft);
+            int x = startX;
+            int y = startY;
 
-            //  ƒ‰ƒ“ƒ_ƒ€‚ÉL‚Î‚·(2ƒ}ƒX)
-            if (directions.Count > 0)
+            while (true)
             {
-                //  •Ç‚ğì¬(‚±‚Ì’n“_‚©‚ç•Ç‚ğL‚Î‚·)
-                SetWall(x, y);
+                int dirCount = 0;
+                if (this.maze[x, y - 1] == MazeConstants.MazeObjKinds.EPath && !isCurrentWallMap[x, y - 2])
+                    directionPool[dirCount++] = Direction.EUp;
+                if (this.maze[x + 1, y] == MazeConstants.MazeObjKinds.EPath && !isCurrentWallMap[x + 2, y])
+                    directionPool[dirCount++] = Direction.ERight;
+                if (this.maze[x, y + 1] == MazeConstants.MazeObjKinds.EPath && !isCurrentWallMap[x, y + 2])
+                    directionPool[dirCount++] = Direction.EDown;
+                if (this.maze[x - 1, y] == MazeConstants.MazeObjKinds.EPath && !isCurrentWallMap[x - 2, y])
+                    directionPool[dirCount++] = Direction.ELeft;
 
-                //  L‚Î‚·æ‚ª’Ê˜H‚Ìê‡‚ÍŠg’£‚ğ‘±‚¯‚é
-                var isPath = false;
-                var dirIndex = random.Next(directions.Count);
-                switch (directions[dirIndex])
+                if (dirCount > 0)
                 {
-                    case Direction.EUp:
-                        isPath = (this.maze[x, y - 2] == MazeObjKinds.EPath);
-                        SetWall(x, --y);
-                        SetWall(x, --y);
+                    SetWall(x, y);
+
+                    var dirIndex = random.Next(dirCount);
+                    var chosenDir = directionPool[dirIndex];
+                    var isPath = false;
+
+                    switch (chosenDir)
+                    {
+                        case Direction.EUp:
+                            isPath = (this.maze[x, y - 2] == MazeConstants.MazeObjKinds.EPath);
+                            SetWall(x, --y); SetWall(x, --y);
+                            break;
+                        case Direction.ERight:
+                            isPath = (this.maze[x + 2, y] == MazeConstants.MazeObjKinds.EPath);
+                            SetWall(++x, y); SetWall(++x, y);
+                            break;
+                        case Direction.EDown:
+                            isPath = (this.maze[x, y + 2] == MazeConstants.MazeObjKinds.EPath);
+                            SetWall(x, ++y); SetWall(x, ++y);
+                            break;
+                        case Direction.ELeft:
+                            isPath = (this.maze[x - 2, y] == MazeConstants.MazeObjKinds.EPath);
+                            SetWall(--x, y); SetWall(--x, y);
+                            break;
+                    }
+
+                    if (!isPath)
+                    {
+                        ClearCurrentWallMap();
                         break;
-                    case Direction.ERight:
-                        isPath = (this.maze[x + 2, y] == MazeObjKinds.EPath);
-                        SetWall(++x, y);
-                        SetWall(++x, y);
-                        break;
-                    case Direction.EDown:
-                        isPath = (this.maze[x, y + 2] == MazeObjKinds.EPath);
-                        SetWall(x, ++y);
-                        SetWall(x, ++y);
-                        break;
-                    case Direction.ELeft:
-                        isPath = (this.maze[x - 2, y] == MazeObjKinds.EPath);
-                        SetWall(--x, y);
-                        SetWall(--x, y);
-                        break;
+                    }
                 }
-                if (isPath)
+                else
                 {
-                    //  Šù‘¶‚Ì•Ç‚ÉÚ‘±‚Å‚«‚Ä‚¢‚È‚¢ê‡‚ÍŠg’£‘±s
-                    ExtendWall(x, y);
+                    // å…¨æ–¹å‘ãŒè‡ªå‚·ï¼ˆè‡ªåˆ†ã®å£ï¼‰ã«ãªã‚‹å ´åˆã€ãƒãƒƒã‚¯ãƒˆãƒ©ãƒƒã‚¯ï¼ˆå¼•ãè¿”ã™ï¼‰
+                    if (currentWallCells.Count > 0)
+                    {
+                        var beforeCell = currentWallCells.Pop();
+                        // å…ƒã„ãŸå ´æ‰€ã®ãƒ•ãƒ©ã‚°ã‚’æŠ˜ã‚‹
+                        isCurrentWallMap[x, y] = false;
+
+                        x = beforeCell.X;
+                        y = beforeCell.Y;
+                    }
+                    else
+                    {
+                        // å¼•ãè¿”ã™å ´æ‰€ã‚‚ãªããªã£ãŸã‚‰çµ‚äº†
+                        break;
+                    }
                 }
-            }
-            else
-            {
-                //  ‚·‚×‚ÄŒ»İŠg’£’†‚Ì•Ç‚É‚Ô‚Â‚©‚éê‡AƒoƒbƒN‚µ‚ÄÄŠJ
-                var beforeCell = CurrentWallCells.Pop();
-                ExtendWall(beforeCell.X, beforeCell.Y);
             }
         }
 
-        //  •Ç‚ğŠg’£‚·‚é
         private void SetWall(int x, int y)
         {
-            this.maze[x, y] = MazeObjKinds.EBreakWall;
+            this.maze[x, y] = MazeConstants.MazeObjKinds.EBreakWall;
             if (x % 2 == 0 && y % 2 == 0)
             {
-                CurrentWallCells.Push(new Cell(x, y));
+                currentWallCells.Push(new Cell(x, y));
+                isCurrentWallMap[x, y] = true;
             }
         }
 
-        //  Šg’£’†‚ÌÀ•W‚©‚Ç‚¤‚©”»’è
-        private bool IsCurrentWall(int x, int y)
+        private void ClearCurrentWallMap()
         {
-            return CurrentWallCells.Contains(new Cell(x, y));
+            foreach (var cell in currentWallCells)
+            {
+                isCurrentWallMap[cell.X, cell.Y] = false;
+            }
         }
     }
 }

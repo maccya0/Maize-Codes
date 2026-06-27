@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MazeGame
 {
-    public class MazeGameDirector : BaseDirector<GameDirector>
+    public class MazeGameDirector : BaseDirector<MazeGameDirector>
     {
         private StageGenerater StageGenerater;
         private PlayerGenerater PlayerGenerater;
@@ -97,7 +97,7 @@ namespace MazeGame
             // System系更新
             GameSystemGenerater.Tick();
             var judger = GameSystemGenerater?.GetGameJudger();
-            if (judger == null)
+            if (judger != null)
             {
                 judger.OnGameFinished -= HandleGameFinished;
             }
@@ -114,7 +114,7 @@ namespace MazeGame
             if (!isGamePlaying) return;
             isGamePlaying = false;
             var judger = GameSystemGenerater?.GetGameJudger();
-            if (judger == null)
+            if (judger != null)
             {
                 judger.OnGameFinished -= HandleGameFinished;
             }

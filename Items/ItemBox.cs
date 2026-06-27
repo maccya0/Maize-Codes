@@ -9,21 +9,26 @@ public class ItemBox : MonoBehaviour
 {
     [SerializeField] private List<ItemBase> ItemList = new List<ItemBase>();
     [SerializeField] private float fadeDuaration = 1.5f;
-    private MessageScrollManager messageScrollManager;
-    private PlayerController playerController;
     private ItemInventory itemInventory;
+    private InputSystem_Actions inputActions;
     private ItemBase thisItem;
     private bool isGetItem;
     private int totalWeight;
 
-    private void Start()
+    public void Init(ItemInventory _itemInventory, InputSystem_Actions _inputActions)
     {
         CalculateTotalWeight();
         GenerateItem();
-        messageScrollManager = FindAnyObjectByType<MessageScrollManager>();
-        playerController = FindAnyObjectByType<PlayerController>();
-        itemInventory = FindAnyObjectByType<ItemInventory>();
+        itemInventory = _itemInventory;
+        inputActions = _inputActions;
     }
+
+    public void Begin()
+    {
+        GenerateItem();
+        isGetItem = false;
+    }
+
 
     private void CalculateTotalWeight()
     {
@@ -57,7 +62,7 @@ public class ItemBox : MonoBehaviour
     {
         if (isGetItem)
         {
-            messageScrollManager.EnqueueMessage("中身が空だ");
+            MessageScrollManager.Instance.EnqueueMessage("中身が空だ");
             return;
 
         }
@@ -65,14 +70,14 @@ public class ItemBox : MonoBehaviour
         if (isget)
         {
             isGetItem = true;
-            messageScrollManager.EnqueueMessage($"{thisItem.itemName}を入手した");
+            MessageScrollManager.Instance.EnqueueMessage($"{thisItem.itemName}を入手した");
             // 宝箱を開けるを削除
-            playerController.Actions.Player.AllPurpose.performed -= OnGetItem;
+            inputActions.Player.AllPurpose.performed -= OnGetItem;
 
         }
         else
         {
-            messageScrollManager.EnqueueMessage("上限を超えたので拾えなかった");
+            MessageScrollManager.Instance.EnqueueMessage("上限を超えたので拾えなかった");
         }
 
         var meshRenderer = GetComponentInChildren<MeshRenderer>();
@@ -81,10 +86,10 @@ public class ItemBox : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.layer == LayerMask.NameToLayer(PlayerConstants.Tag))
+        if (other.gameObject.layer == LayerMask.NameToLayer(MazeGameConstants.PlayerConstants.Tag))
         {
             // 宝箱を開けるを追加
-            playerController.Actions.Player.AllPurpose.performed += OnGetItem;
+            inputActions.Player.AllPurpose.performed += OnGetItem;
             // ヘルプメッセージを表示
             HelpMessaageController.instance.ShowHelp("宝箱を開ける", this.gameObject);
 
@@ -94,10 +99,10 @@ public class ItemBox : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.gameObject.layer == LayerMask.NameToLayer(PlayerConstants.Tag))
+        if (other.gameObject.layer == LayerMask.NameToLayer(MazeGameConstants.PlayerConstants.Tag))
         {
             // 宝箱を開けるを削除
-            playerController.Actions.Player.AllPurpose.performed -= OnGetItem;
+            inputActions.Player.AllPurpose.performed -= OnGetItem;
             // ヘルプメッセージを非表示
             HelpMessaageController.instance.HideHelp();
         }

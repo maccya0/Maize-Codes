@@ -28,7 +28,6 @@ public class ExplosionController : MonoBehaviour
         //起動時に必要な初期化を行う
         _explosionEffect.gameObject.SetActive(false);
         _explosionCollider.enabled = false;
-        //_explosionSound.Stop();
         isHit = false;
     }
 
@@ -64,7 +63,7 @@ public class ExplosionController : MonoBehaviour
     {
         if (isHit) return;
         //プレイヤー以外なら返す
-        if (other.tag != PlayerConstants.Tag) return;
+        if (!other.CompareTag(MazeGameConstants.PlayerConstants.Tag)) return;
         isHit = true;
         // 衝突対象がRigidbodyの配下であるかを調べる
         var rigidBody = other.GetComponent<Rigidbody>();

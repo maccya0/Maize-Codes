@@ -11,7 +11,7 @@ public class HitParticle : MonoBehaviour
     void OnParticleCollision(GameObject other)
     {
         if (ishit) return;
-        if (other.tag == PlayerConstants.Tag)
+        if (!other.CompareTag(MazeGameConstants.PlayerConstants.Tag)) return;
         {
             ishit = true;
             //ƒ_ƒ[ƒW‚ğ‰Á‚¦‚é

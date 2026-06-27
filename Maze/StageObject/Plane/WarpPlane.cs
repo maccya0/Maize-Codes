@@ -1,6 +1,4 @@
 using UnityEngine;
-using static MazeGame.MazeGameConstants.MazeConstants;
-using static MazeGame.MazeGameConstants;
 using System.Collections;
 using System;
 using System.Linq;
@@ -38,19 +36,19 @@ namespace MazeGame
         private void OnCollisionEnter(Collision collision)
         {
             if (endFlg) return;
-            if (collision.gameObject.layer == LayerMask.NameToLayer(PlayerConstants.Layer))
+            if (collision.gameObject.layer == LayerMask.NameToLayer(MazeGameConstants.PlayerConstants.Layer))
             {
                 endFlg = true;
                 Maze mazeObj = Maze.Instance;
                 int stageSize = mazeObj.GetStageSize();
-                MazeObjKinds[,] maze = mazeObj.GetMazeData();
+                MazeConstants.MazeObjKinds[,] maze = mazeObj.GetMazeData();
                 int posX;
                 int posY;
                 do
                 {
                     posX = UnityEngine.Random.Range(0, stageSize - 1);
                     posY = UnityEngine.Random.Range(0, stageSize - 1);
-                } while (maze[posX, posY] != MazeObjKinds.EPath);
+                } while (maze[posX, posY] != MazeConstants.MazeObjKinds.EPath);
 
                 Vector3 WarpPos = Maze.Instance.GetObjectPos(posX, posY);
                 // 少し高い場所に移動する事ですり抜けを防止する

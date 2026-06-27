@@ -10,6 +10,8 @@ namespace MazeGame
         private BehaviorGraphAgent agent;
         [SerializeField] private SoundData voiceSound;
 
+        private float ToleranceRange = 0.001f;
+
         void ForwardAttackVoice()
         {
             SoundManager soundManager = SoundManager.Instance;
@@ -36,7 +38,7 @@ namespace MazeGame
                 if (animator != null && player != null)
                 {
                     Transform chest = animator.GetBoneTransform(HumanBodyBones.Chest);
-                    Vector3 spawnPos = (chest != null) ? chest.position : this.transform.position + Vector3.up * 1f;
+                    Vector3 spawnPos = (chest != null) ? chest.position : this.transform.position + Vector3.up;
 
                     spawnPos += this.transform.forward * 0.5f;
 
@@ -46,7 +48,8 @@ namespace MazeGame
 
                     direction.y = 0;
 
-                    if (direction.sqrMagnitude > 0.001f)
+
+                    if (direction.sqrMagnitude > ToleranceRange)
                     {
                         effect.transform.rotation = Quaternion.LookRotation(direction);
                     }

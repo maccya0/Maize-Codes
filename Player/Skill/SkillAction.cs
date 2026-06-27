@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 
 public abstract class SkillAction : MonoBehaviour
 {
@@ -13,18 +14,28 @@ public abstract class SkillAction : MonoBehaviour
     protected bool isReady;
     protected GameObject particleObject;
     private Coroutine runninngCoroutine;
-    public event Action<float> OnRecastProgress;
-    public event Action<int> OnActionSkill;
 
+
+    [Header("-------------- スキルイベント通知 --------------")]
+    [Tooltip("リキャストの進捗率（0.0 〜 1.0）を通知")]
+    // Genraterが違う場合に備えてUnityEventで実施する
+    [SerializeField] private UnityEvent<float> onRecastProgress = new UnityEvent<float>();
+
+    [Tooltip("残り使用回数を通知")]
+    [SerializeField] private UnityEvent<int> onActionSkill = new UnityEvent<int>();
+
+    public UnityEvent<float> OnRecastProgress => onRecastProgress;
+    public UnityEvent<int> OnActionSkill => onActionSkill;
     public virtual void Init(PlayerController _playerController, InputSystem_Actions _actions)
     {
-        if (skillData.particle == null)
-        {
-            throw new InvalidOperationException("パーティクルが未設定");
-        }
         if (skillData == null)
         {
             throw new InvalidOperationException("データが未設定");
+        }
+
+        if (skillData.particle == null)
+        {
+            throw new InvalidOperationException("パーティクルが未設定");
         }
         if (skillData.actionTime == 0 || skillData.actionLimit == 0)
         {

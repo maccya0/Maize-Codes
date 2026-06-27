@@ -1,8 +1,6 @@
 using System;
 using Unity.AI.Navigation;
 using UnityEngine;
-using static MazeGame.MazeGameConstants.MazeConstants;
-using static MazeGame.MazeGameConstants;
 
 namespace MazeGame
 {
@@ -13,6 +11,8 @@ namespace MazeGame
         [SerializeField] GameLevelWindowController GameLevelWindowController;
         [SerializeField] GameResultWindowController GameResultWindowController;
         [SerializeField] ImageTextAnimator ImageTextAnimator;
+        [SerializeField] ItemUI ItemUI;
+        [SerializeField] HelpMessaageController HelpMessaageController;
         LevelSelection LevelSelection;
         public UIGenerater(LevelSelection _levelSelection)
         {
@@ -26,12 +26,15 @@ namespace MazeGame
             GameExplainWindowController.WindowInit();
             GameLevelWindowController.WindowInit(LevelSelection);
             GameResultWindowController.WindowInit();
+            ItemUI.Init();
+            HelpMessaageController.Init();
             MessageScrollManager.Instance.ManagerInit();
         }
 
         public override void Generated()
         {
-            // “Á‚É‚È‚µ
+            ItemUI.Begin();
+            HelpMessaageController.Begin();
             MessageScrollManager.Instance.ManagerStart();
         }
 
@@ -42,7 +45,7 @@ namespace MazeGame
         }
         public override void Destroy()
         {
-            // “Á‚É‚È‚µ
+            ItemUI.Destroy();
             MessageScrollManager.Instance.ManagerDestroy();
         }
 

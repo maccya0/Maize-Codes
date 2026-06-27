@@ -1,6 +1,5 @@
 using UnityEngine;
-using static MazeGame.MazeGameConstants;
-
+using MazeGame;
 namespace MazeGame
 {
     public class AreaEffect : MonoBehaviour
@@ -10,6 +9,8 @@ namespace MazeGame
         [SerializeField] private float Radius = 5.0f;
         [SerializeField] private SoundData effectSE;
         private bool isHit;
+        private float StickVal = 1.0f;
+        private float ThroughVal = 0.0f;
 
         private void Awake()
         {
@@ -21,15 +22,15 @@ namespace MazeGame
         {
             ParticleSystem ps = GetComponent<ParticleSystem>();
             var collision = ps.collision;
-            if (other.CompareTag(MazeConstants.wallTag) || other.CompareTag(MazeConstants.indestructibleWallTag))
+            if (other.CompareTag(MazeGameConstants.MazeConstants.wallTag) || other.CompareTag(MazeGameConstants.MazeConstants.indestructibleWallTag))
             {
-                collision.dampen = 1.0f;
+                collision.dampen = StickVal;
             }
 
-            if (!other.gameObject.CompareTag(PlayerConstants.Tag)) return;
+            if (!other.gameObject.CompareTag(MazeGameConstants.PlayerConstants.Tag)) return;
             if (isHit) return;
             isHit = true;
-            collision.dampen = 0.0f;
+            collision.dampen = ThroughVal;
             var rigidBody = other.GetComponent<Rigidbody>();
             rigidBody.AddExplosionForce(Impact, this.transform.position, Radius);
             other.gameObject.GetComponent<PlayerController>().AddDamage(Damage);

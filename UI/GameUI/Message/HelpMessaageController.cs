@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks.Triggers;
 using UnityEngine;
 
 public class HelpMessaageController : MonoBehaviour
@@ -8,10 +9,15 @@ public class HelpMessaageController : MonoBehaviour
     [SerializeField] private float upperOffset = 0.5f;
     [SerializeField] private float forwardOffset = 0.5f;
 
-    private void Awake()
+    public void Init()
     {
         instance = this;
+    }
+
+    public void Begin()
+    {
         this.gameObject.SetActive(false);
+
     }
 
     public void ShowHelp(string message , GameObject target)

@@ -36,21 +36,19 @@ namespace MazeGame
             hitCollider.enabled = true;
             isHit = false;
             isEnable = true;
-            Debug.Log("enable Collider");
         }
         public void DisableLightAttackCollider()
         {
             hitCollider.enabled = false;
             isHit = true;
             isEnable = false;
-            Debug.Log("disable Collider");
         }
 
         private void OnTriggerEnter(Collider other)
         {
             if (!isEnable) return;
             if (isHit) return;
-            if (other.CompareTag(PlayerConstants.Tag))
+            if (other.CompareTag(MazeGameConstants.PlayerConstants.Tag))
             {
                 isHit = true;
                 other.gameObject.GetComponent<PlayerController>().AddDamage(damage);

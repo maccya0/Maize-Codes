@@ -17,14 +17,14 @@ namespace MazeGame
         private float pitch = 0f;
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
-        private void Start()
+        public void Init(InputSystem_Actions inputActions)
         {
-            actions = playerController.Actions;
+            actions = inputActions;
             actions.Player.Look.performed += OnLookPerformed;
             actions.Player.Look.canceled += OnLookCanceld;
         }
 
-        private void OnDestroy()
+        public void Destroy()
         {
             actions.Player.Look.performed -= OnLookPerformed;
             actions.Player.Look.canceled -= OnLookCanceld;
@@ -40,8 +40,7 @@ namespace MazeGame
             lookInput = Vector2.zero;
         }
 
-        // Update is called once per frame
-        void Update()
+        public void Tick()
         {
             //キャラクターの移動に合わせたカメラ移動
             MoveCamera();

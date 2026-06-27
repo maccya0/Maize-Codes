@@ -13,7 +13,7 @@ namespace MazeGame
         private void OnTriggerEnter(Collider other)
         {
             //“G‚ÆƒvƒŒƒCƒ„[‚Å“®ì‚ğ•Ï‚¦‚é
-            if (other.gameObject.layer == LayerMask.NameToLayer(PlayerConstants.Layer))
+            if (other.gameObject.layer == LayerMask.NameToLayer(MazeGameConstants.PlayerConstants.Layer))
             {
                 PlayerController controller;
                 if(other.gameObject.TryGetComponent<PlayerController>(out controller))

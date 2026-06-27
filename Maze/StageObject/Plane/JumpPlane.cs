@@ -33,7 +33,7 @@ namespace MazeGame
         private void OnCollisionEnter(Collision collision)
         {
             if (endFlg) return;
-            if (collision.gameObject.layer == LayerMask.NameToLayer(PlayerConstants.Layer))
+            if (collision.gameObject.layer == LayerMask.NameToLayer(MazeGameConstants.PlayerConstants.Layer))
             {
                 endFlg = true;
                 SoundManager soundManager = SoundManager.Instance;

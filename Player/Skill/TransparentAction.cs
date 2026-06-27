@@ -7,6 +7,8 @@ namespace MazeGame
 {
     public class TransparentAction : SkillAction
     {
+        const string TransparentTag = "Transparent";
+
         public override void Init(PlayerController _playerController, InputSystem_Actions _actions)
         {
             base.Init(_playerController, _actions);
@@ -39,7 +41,7 @@ namespace MazeGame
             SkillExecute();
             particleObject = InstantiateAndDestroy(skillData.particle, transform.position, Quaternion.identity,skillData.sound);
             particleObject.transform.SetParent(transform);
-            gameObject.tag = "Transparent";
+            gameObject.tag = TransparentTag;
             float actionTime = Mathf.Max(0, skillData.actionTime);
             while (actionTime > 0)
             {
@@ -47,7 +49,7 @@ namespace MazeGame
                 yield return null;
             }
             Destroy(particleObject);
-            gameObject.tag = PlayerConstants.Tag;
+            gameObject.tag = MazeGameConstants.PlayerConstants.Tag;
         }
     }
 

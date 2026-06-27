@@ -40,7 +40,6 @@ namespace MazeGame
             lehtCollider.enabled = true;
             isHit = false;
             isEnable = true;
-            Debug.Log("enable Collider");
         }
         public void DisableJumpAttackCollider()
         {
@@ -50,14 +49,13 @@ namespace MazeGame
             isEnable = false;
             GameObject sharpRockEffect = Instantiate(SharpRockEffect);
             sharpRockEffect.transform.position = this.transform.position;
-            Debug.Log("disable Collider");
         }
 
         private void OnTriggerEnter(Collider other)
         {
             if (!isEnable) return;
             if (isHit) return;
-            if (other.CompareTag(PlayerConstants.Tag))
+            if (other.CompareTag(MazeGameConstants.PlayerConstants.Tag))
             {
                 isHit = true;
                 other.gameObject.GetComponent<PlayerController>().AddDamage(damage);

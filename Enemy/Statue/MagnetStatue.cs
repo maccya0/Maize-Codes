@@ -24,6 +24,7 @@ public class MagnetStatue : Statue
             // プレイヤー　→　像へのベクトルを生成
             Vector3 direction = this.transform.position - player.transform.position;
             float dist = direction.magnitude;
+            // Max 1.0に丸める
             dist = Mathf.Max(dist, 1.0f);
             if(dist < radius)
             {

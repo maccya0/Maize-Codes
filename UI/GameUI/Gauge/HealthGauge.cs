@@ -13,7 +13,8 @@ namespace MazeGame
         [SerializeField] private Image burnImage;
 
 
-        private float duration = 0.5f;
+        private float duration = 0.25f;
+        private float derayTime = 0.5f;
         private short MaxHP;
 
         private void Awake()
@@ -50,7 +51,7 @@ namespace MazeGame
             Sequence mySequence = DOTween.Sequence();
 
             mySequence.Append(healthImage.DOFillAmount(rate, duration));
-            mySequence.Append(burnImage.DOFillAmount(rate, duration * 0.5f).SetDelay(0.5f));
+            mySequence.Append(burnImage.DOFillAmount(rate, duration).SetDelay(derayTime));
             mySequence.Play();
         }
     }

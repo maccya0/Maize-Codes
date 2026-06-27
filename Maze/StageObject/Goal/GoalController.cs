@@ -13,7 +13,7 @@ namespace MazeGame
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.gameObject.layer == LayerMask.NameToLayer(PlayerConstants.Tag) && !reach)
+            if (other.gameObject.layer == LayerMask.NameToLayer(MazeGameConstants.PlayerConstants.Layer))
             {
                 reach = true;
                 ReachedGoal.Invoke();

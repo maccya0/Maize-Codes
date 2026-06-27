@@ -63,7 +63,7 @@ public class DebuffCircleController : MonoBehaviour
     {
         if(isTrigger) return;
         //プレイヤー以外なら返す
-        if (other.tag != PlayerConstants.Tag) return;
+        if (!other.CompareTag(MazeGameConstants.PlayerConstants.Tag)) return;
         isTrigger = true;
         GameObject hitEffect = Instantiate(HitEffect, other.transform.position, Quaternion.identity);
         hitEffect.GetComponent<SpeedDebuffController>().Debuff(other.gameObject);

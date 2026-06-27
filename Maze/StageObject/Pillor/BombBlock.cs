@@ -1,6 +1,4 @@
 using UnityEngine;
-using static MazeGame.MazeGameConstants.MazeConstants;
-using static MazeGame.MazeGameConstants;
 using System;
 using Cysharp.Threading.Tasks;
 using System.Linq;
@@ -28,21 +26,21 @@ namespace MazeGame
         }
 
         // 爆発検知の方向を設定する
-        public void SetBombInfo(Direct _direct)
+        public void SetBombInfo(MazeConstants.Direct _direct)
         {
             runFlg = false;
             switch (_direct)
             {
-                case Direct.North:
+                case MazeConstants.Direct.North:
                     Directiom = Vector3.forward;
                     break;
-                case Direct.East:
+                case MazeConstants.Direct.East:
                     Directiom = Vector3.right;
                     break;
-                case Direct.South:
+                case MazeConstants.Direct.South:
                     Directiom = Vector3.back;
                     break;
-                case Direct.West:
+                case MazeConstants.Direct.West:
                     Directiom =Vector3.left;
                     break;
                 default:
@@ -72,13 +70,13 @@ namespace MazeGame
         {
             // 壁の高さを基準にするとY座標が高いので調整する
             Vector3 rayPos = this.transform.position;
-            rayPos.y = PlayerConstants.Height;
+            rayPos.y = MazeGameConstants.PlayerConstants.Height+MazeGameConstants.MazeConstants.rootY;
             Ray ray = new Ray(rayPos, Directiom);
             RaycastHit hit;
             Debug.DrawRay(ray.origin, ray.direction * rayDistance, Color.yellow, 0, false);
             if (Physics.Raycast(ray, out hit, rayDistance))
             {
-                if (hit.collider.gameObject.layer == LayerMask.NameToLayer(PlayerConstants.Layer))
+                if (hit.collider.gameObject.layer == LayerMask.NameToLayer(MazeGameConstants.PlayerConstants.Layer))
                 {
                     runFlg = true;
                     // Rayから対象へのベクトルを作成して正規化する事で向きにする
@@ -87,7 +85,7 @@ namespace MazeGame
                     Vector3 direct = Directiom;
                     hit.collider.gameObject.GetComponent<PlayerController>().AddDamage(damage);
                     Vector3 explosionPos = this.transform.position;
-                    explosionPos.y = PlayerConstants.Height;
+                    rayPos.y = MazeGameConstants.PlayerConstants.Height + MazeGameConstants.MazeConstants.rootY;
                     SoundManager soundManager = SoundManager.Instance;
                     if (soundManager != null)
                     {

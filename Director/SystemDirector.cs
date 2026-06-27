@@ -22,6 +22,7 @@ namespace MazeGame
         [SerializeField] private MazeData[] mazeDatas;
         [SerializeField] Scene StartScene;
         [SerializeField] Scene MazeScene;
+        [SerializeField] MazeGameConstants MazeGameConstants;
         private LevelSelection LevelSelection;
         public LevelSelection GetLevelSelection() { return LevelSelection; }
         // ステートパターン管理用
@@ -31,6 +32,9 @@ namespace MazeGame
 
         private void Awake()
         {
+            // ゲーム定数なので最速で実施する
+            MazeGameConstants.Init();
+
             DirectorInit();
         }
 
